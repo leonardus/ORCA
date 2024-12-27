@@ -27,8 +27,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * before it assumes to use the default values.
  */
 void mem_preinit(void) {
-    extern void* __myArena1Lo;
-    extern void* __myArena1Hi;
+	extern void* __myArena1Lo;
+	extern void* __myArena1Hi;
 	__myArena1Lo = *(void**)0x80000030;
 	__myArena1Hi = *(void**)0x80000034;
 }
