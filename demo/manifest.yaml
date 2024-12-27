@@ -1,0 +1,12 @@
+%YAML 1.1
+---
+name: 'ORCA Demo'
+gameid: 'G25EO2'
+version: 0
+levels:
+    duck:
+        gltf:
+            - 'Duck.glb'
+        script:
+            - 'demo.lua'
+...
