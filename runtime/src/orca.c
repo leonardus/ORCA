@@ -19,9 +19,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <gccore.h>
 #include "fst.h"
 #include "mem.h"
+#include "pak.h"
 
 void __SYS_PreInit(void) {
 	mem_preinit();
+}
+
+static void done_pak(s32 bytes_read, void* orcamem) {
+	pak_init(orcamem);
 }
 
 int main(void) {;
@@ -29,6 +34,27 @@ int main(void) {;
 	SYS_Report("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
 	fst_init();
+
+	void* orcamem = (void*)((uintptr_t)SYS_GetArenaLo() + 0x100000); // 1MB
+	if (orcamem > SYS_GetArenaHi()) {
+		SYS_Report("Not enough memory.\n");
+		return -2;
+	}
+	size_t capacity = (uintptr_t)SYS_GetArenaHi() - (uintptr_t)orcamem;
+	SYS_SetArenaHi(orcamem);
+
+	struct FSTEntry* q = fst_resolve_path("duck.PAK");
+	if (q == NULL) {
+		SYS_Report("Could not resolve duck.PAK.\n");
+		return -1;
+	}
+
+	if (capacity < fst_get_bufsz(q)) {
+		SYS_Report("Not enough memory.\n");
+		return -2;
+	}
+
+	fst_read_file(q, orcamem, done_pak, orcamem);
 
 	while(1);
 
