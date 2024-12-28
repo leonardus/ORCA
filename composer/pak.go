@@ -92,7 +92,6 @@ type BinMaterial struct {
 }
 
 type BinMeshPrimitive struct {
-	Name         uint32
 	AttrPos      uint32
 	AttrNormal   uint32
 	AttrTangent  uint32
@@ -313,7 +312,6 @@ func packPrimitives(model Model, pak Pak) (idxs map[*gltf.Primitive]int, err err
 			}[primitive.Mode]
 
 			primitives = append(primitives, BinMeshPrimitive{
-				Name:         uint32(len(*pak.StringTable)),
 				AttrPos:      attributes["POSITION"],
 				AttrNormal:   attributes["NORMAL"],
 				AttrTangent:  attributes["TANGENT"],
