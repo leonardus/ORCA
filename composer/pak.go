@@ -496,7 +496,7 @@ func packAccessors(model Model, pak Pak) (err error) {
 			elementType = 6
 		}
 
-		name := uint32(uint32(len(*pak.StringTable)))
+		name := uint32(len(*pak.StringTable))
 		*pak.StringTable = append(*pak.StringTable, ToCString(accessor.Name)...)
 
 		*pak.Buffer, err = AlignPad(*pak.Buffer, 4)
