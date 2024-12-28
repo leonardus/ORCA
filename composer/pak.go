@@ -68,8 +68,9 @@ type BinModelDirectory struct {
 }
 
 type BinScene struct {
-	Name  uint32
-	Nodes uint32
+	Name       uint32
+	NodesCount uint32
+	Nodes      uint32
 }
 
 type BinAccessor struct {
@@ -147,8 +148,9 @@ func packScenes(model Model, pak Pak) (err error) {
 		}
 
 		scenes = append(scenes, BinScene{
-			Name:  name,
-			Nodes: nodes,
+			Name:       name,
+			NodesCount: uint32(len(scene.Nodes)),
+			Nodes:      nodes,
 		})
 	}
 
