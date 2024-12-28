@@ -597,6 +597,8 @@ func PackLevel(level Level, root string) (buf []byte, err error) {
 			Offset: uint32(len(buf)),
 			Type:   0,
 		}
+		*pak.Buffer = AppendOrPanic(*pak.Buffer, binary.BigEndian, model.Directory)
+		*pak.StringTable = append(*pak.StringTable, ToCString(path)...)
 		*pak.Directory = append(*pak.Directory, entry)
 	}
 
