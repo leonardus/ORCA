@@ -1,0 +1,7 @@
+---
+# .clang-format-ignore file is only supported in recent versions of
+# clang-format (feb 2024), so this file is here as a fallback
+DisableFormat: 'true'
+SortIncludes: 'false'
+
+...

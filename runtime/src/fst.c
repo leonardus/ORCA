@@ -19,17 +19,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <string.h>
 #include <gccore.h>
-#include "orca.h"
 #include "fst.h"
+#include "orca.h"
 
 static struct FSTEntry** const FSTBase = (void*)0x80000038;
-static u32* const FSTMaxLength = (void*)0x8000003C;
+static u32* const              FSTMaxLength = (void*)0x8000003C;
+
 /* String table is located immediately above FST entries */
 #define STRING_TABLE ((char*)(*FSTBase + (*FSTBase)->length))
 
 struct ExtDVDUD { /* extended DVD userdata */
 	fstreadcb cb;
-	void* ud;
+	void*     ud;
 };
 
 bool fst_isdir(struct FSTEntry* entry) {
@@ -44,8 +45,7 @@ char* fst_get_filename(struct FSTEntry* entry) {
 	return STRING_TABLE + (entry->ident & 0x00FFFFFF);
 }
 
-static struct FSTEntry* find_child(struct FSTEntry* dir, char const* name,
-								   size_t len) {
+static struct FSTEntry* find_child(struct FSTEntry* dir, char const* name, size_t len) {
 	if (len == 0) return NULL;
 
 	struct FSTEntry* child = dir + 1;
@@ -68,7 +68,7 @@ struct FSTEntry* fst_resolve_path(char* path) {
 	struct FSTEntry* result = NULL;
 
 	struct FSTEntry* pwd = *FSTBase;
-	char const* segment = path;
+	char const*      segment = path;
 	for (char* c = path;; c++) {
 		if ((*c == '/') || (*c == '\\')) {
 			if (c == path) { /* first character */
@@ -106,8 +106,7 @@ int fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud) 
 
 	dvdcmdblk* block = calloc(1, sizeof(dvdcmdblk));
 	DVD_SetUserData(block, extud);
-	DVD_ReadAbsAsync(block, buffer, ROUNDUP32(entry->length),
-	                 entry->offset, done_read_file);
+	DVD_ReadAbsAsync(block, buffer, ROUNDUP32(entry->length), entry->offset, done_read_file);
 
 	return 0;
 }
@@ -116,28 +115,26 @@ static void init_lowmem(void) {
 	/* libogc overwrites low memory; recover FST values */
 
 	/* Read FSTMaxLength from DVD, at offset 0x42C */
-	int const dvdOffset = 0x42C;
+	int const    dvdOffset = 0x42C;
 	size_t const bufsz = 32;
-	void* const buf = aligned_alloc(32, bufsz);
-	dvdcmdblk block;
+	void* const  buf = aligned_alloc(32, bufsz);
+	dvdcmdblk    block;
 	DVD_ReadAbs(&block, buf, bufsz, dvdOffset);
 	*FSTMaxLength = *((u32*)buf);
 	free(buf);
 
 	/* FST is loaded by retail apploader at top of memory */
 	size_t const memSize = *((u32*)(SYS_BASE_CACHED + 0xF0));
-	*FSTBase = (struct FSTEntry*)(SYS_BASE_CACHED + memSize
-	                              - ROUNDUP32(*FSTMaxLength));
+	*FSTBase = (struct FSTEntry*)(SYS_BASE_CACHED + memSize - ROUNDUP32(*FSTMaxLength));
 	SYS_Report("FST Base: %p\n", *FSTBase);
 }
 
 static void check_fst(void) {
 	for (struct FSTEntry* entry = *FSTBase; entry < *FSTBase + (*FSTBase)->length; entry++) {
-		if (entry->offset % 4 != 0) SYS_Report(
-			"WARNING: File \"%s\" has misaligned disc offset 0x%x\n",
-			fst_get_filename(entry),
-			entry->offset
-		);
+		if (entry->offset % 4 != 0) {
+			SYS_Report("WARNING: File \"%s\" has misaligned disc offset 0x%x\n", fst_get_filename(entry),
+			           entry->offset);
+		}
 	}
 }
 static void print_fst(void) {

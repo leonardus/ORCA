@@ -18,11 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <gccore.h>
 
-enum AssetType {
-	ASSET_TYPE_MODEL = 0,
-	ASSET_TYPE_SCRIPT,
-	ASSET_TYPE_SOUND
-};
+enum AssetType { ASSET_TYPE_MODEL = 0, ASSET_TYPE_SCRIPT, ASSET_TYPE_SOUND };
 
 enum PrimitiveMode {
 	MODE_POINTS,
@@ -34,41 +30,26 @@ enum PrimitiveMode {
 	MODE_TRAINGLE_FAN
 };
 
-enum ComponentType {
-	BYTE = 0,
-	UNSIGNED_BYTE,
-	SHORT,
-	UNSIGNED_SHORT,
-	UNSIGNED_INT,
-	FLOAT
-};
+enum ComponentType { BYTE = 0, UNSIGNED_BYTE, SHORT, UNSIGNED_SHORT, UNSIGNED_INT, FLOAT };
 
-enum ElementType {
-	SCALAR = 0,
-	VEC2,
-	VEC3,
-	VEC4,
-	MAT2,
-	MAT3,
-	MAT4
-};
+enum ElementType { SCALAR = 0, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
 
 struct Accessor {
 	char const* name;
-	void* buffer;
-	size_t count;
-	u8 component_type; // enum ComponentType
-	u8 element_type; // enum ElementType
-	u8 _pad[2];
+	void*       buffer;
+	size_t      count;
+	u8          component_type; // enum ComponentType
+	u8          element_type;   // enum ElementType
+	u8          _pad[2];
 } __attribute__((__packed__));
 
 struct Material {
 	char const* name;
-	void* texture;
-	u8 tex_coord;
-	u8 format;
-	u8 wrap_s;
-	u8 wrap_t;
+	void*       texture;
+	u8          tex_coord;
+	u8          format;
+	u8          wrap_s;
+	u8          wrap_t;
 } __attribute__((__packed__));
 
 struct MeshPrimitive {
@@ -82,60 +63,60 @@ struct MeshPrimitive {
 	struct Accessor* attr_weights_0;
 	struct Accessor* indices;
 	struct Material* material;
-	u8 mode; // enum PrimitiveMode
+	u8               mode; // enum PrimitiveMode
 } __attribute__((__packed__));
 
 struct Mesh {
 	char const* name;
-	size_t primitives_count;
-	u32 const* primitives;
+	size_t      primitives_count;
+	u32 const*  primitives;
 } __attribute__((__packed__));
 
 struct Node {
-	char const* name;
-	f32 rotation[4];
-	f32 scale[3];
-	f32 translation[3];
-	size_t children_count;
-	u32 const* children;
+	char const*  name;
+	f32          rotation[4];
+	f32          scale[3];
+	f32          translation[3];
+	size_t       children_count;
+	u32 const*   children;
 	struct Mesh* mesh;
 } __attribute__((__packed__));
 
 struct Scene {
 	char const* name;
-	size_t nodes_count;
-	u32 const* nodes;
+	size_t      nodes_count;
+	u32 const*  nodes;
 } __attribute__((__packed__));
 
 struct Model {
-	size_t index_table_count;
-	u32 const* index_table;
-	size_t node_table_count;
-	struct Node* node_table;
-	size_t mesh_table_count;
-	struct Mesh* mesh_table;
-	size_t material_table_count;
-	struct Material* material_table;
-	size_t primitive_table_count;
+	size_t                index_table_count;
+	u32 const*            index_table;
+	size_t                node_table_count;
+	struct Node*          node_table;
+	size_t                mesh_table_count;
+	struct Mesh*          mesh_table;
+	size_t                material_table_count;
+	struct Material*      material_table;
+	size_t                primitive_table_count;
 	struct MeshPrimitive* primitive_table;
-	size_t accessor_table_count;
-	struct Accessor* accessor_table;
-	size_t scene_table_count;
-	struct Scene* scene_table;
+	size_t                accessor_table_count;
+	struct Accessor*      accessor_table;
+	size_t                scene_table_count;
+	struct Scene*         scene_table;
 } __attribute__((__packed__));
 
 struct DirectoryEntry {
 	char const* name;
-	void* offset;
-	u8 type; // enum AssetType
-	u8 _pad[3];
+	void*       offset;
+	u8          type; // enum AssetType
+	u8          _pad[3];
 } __attribute__((__packed__));
 
 struct PAKHeader {
-	char signature[4];
-	size_t string_table_length;
-	char const* string_table;
-	size_t directory_count;
+	char                   signature[4];
+	size_t                 string_table_length;
+	char const*            string_table;
+	size_t                 directory_count;
 	struct DirectoryEntry* directory;
 } __attribute__((__packed__));
 

@@ -19,17 +19,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <gccore.h>
 
 struct FSTEntry {
-	u32 ident;  /* byte 1    : flags; 0: file 1: directory                */
-	            /* bytes 2-4 : filename, offset into string table         */
+	u32 ident; /* byte 1    : flags; 0: file 1: directory                */
+	/* bytes 2-4 : filename, offset into string table         */
 	u32 offset; /* file_offset or parent_offset (dir)                     */
 	u32 length; /* file_length or num_entries (root) or next_offset (dir) */
 };
 
 typedef void (*fstreadcb)(s32 bytes_read, void* ud);
 
-bool fst_is_directory(struct FSTEntry* entry);
-size_t fst_get_bufsz(struct FSTEntry* entry);
-char* fst_get_filename(struct FSTEntry* entry);
+bool             fst_is_directory(struct FSTEntry* entry);
+size_t           fst_get_bufsz(struct FSTEntry* entry);
+char*            fst_get_filename(struct FSTEntry* entry);
 struct FSTEntry* fst_resolve_path(char* path);
-int fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud);
-void fst_init(void);
+int              fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud);
+void             fst_init(void);

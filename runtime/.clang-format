@@ -1,0 +1,15 @@
+---
+BasedOnStyle: LLVM
+ColumnLimit: '120'
+IndentWidth: '4'
+PointerAlignment: Left
+AlignArrayOfStructures: Left
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: 'false'
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AlignConsecutiveDeclarations: 'true'
+SortIncludes: 'false'
+TabWidth: '4'
+UseTab: ForIndentation
+
+...

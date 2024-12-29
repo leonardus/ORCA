@@ -29,7 +29,7 @@ static void done_pak(s32 bytes_read, void* orcamem) {
 	pak_init(orcamem);
 }
 
-int main(void) {;
+int main(void) {
 	SYS_Report("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
 	SYS_Report("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
@@ -56,7 +56,8 @@ int main(void) {;
 
 	fst_read_file(q, orcamem, done_pak, orcamem);
 
-	while(1);
+	while (1)
+		;
 
 	return 0;
 }

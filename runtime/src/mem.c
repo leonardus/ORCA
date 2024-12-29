@@ -20,9 +20,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /*
  * libogc2's SYS_Init() calls __lowmem_init(), which sets ArenaHi and ArenaLo
- * to hardcoded values in devkitPro's linker script. This value can be overridden
- * by assigning values to the weak symbols (void*)__myArena1Lo/__myArena1Hi.
- * Because SYS_Init() calls __SYS_PreInit() prior to __lowmem_init(), we set the
+ * to hardcoded values in devkitPro's linker script. This value can be
+ * overridden by assigning values to the weak symbols
+ * (void*)__myArena1Lo/__myArena1Hi. Because SYS_Init() calls __SYS_PreInit()
+ * prior to __lowmem_init(), we set the
  * __myArena1Lo/__myArena1Hi here to the values that are given by the apploader,
  * before it assumes to use the default values.
  */

@@ -68,4 +68,4 @@ void SYS_STDIO_Report(bool use_stdout);
 
 */
 
-void SYS_Report (char* fmt_, ...);
+void SYS_Report(char* fmt_, ...);

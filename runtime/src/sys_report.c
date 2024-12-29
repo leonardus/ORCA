@@ -52,84 +52,74 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <gccore.h>
 
+static ssize_t __uart_write(const char* buffer, size_t len) {
+	u32 cmd, ret;
 
-static ssize_t __uart_write(const char *buffer,size_t len)
-{
-	u32 cmd,ret;
-
-	if(EXI_Lock(EXI_CHANNEL_0,EXI_DEVICE_1,NULL)==0) return 0;
-	if(EXI_Select(EXI_CHANNEL_0,EXI_DEVICE_1,EXI_SPEED8MHZ)==0) {
+	if (EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL) == 0) return 0;
+	if (EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED8MHZ) == 0) {
 		EXI_Unlock(EXI_CHANNEL_0);
 		return len;
 	}
 
 	ret = 0;
 	cmd = 0xa0010000;
-	if(EXI_Imm(EXI_CHANNEL_0,&cmd,4,EXI_WRITE,NULL)==0) ret |= 0x01;
-	if(EXI_Sync(EXI_CHANNEL_0)==0) ret |= 0x02;
-	if(EXI_ImmEx(EXI_CHANNEL_0,(void *)buffer,len,EXI_WRITE)==0) ret |= 0x04;
-	if(EXI_Deselect(EXI_CHANNEL_0)==0) ret |= 0x08;
-	if(EXI_Unlock(EXI_CHANNEL_0)==0) ret |= 0x10;
+	if (EXI_Imm(EXI_CHANNEL_0, &cmd, 4, EXI_WRITE, NULL) == 0) ret |= 0x01;
+	if (EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x02;
+	if (EXI_ImmEx(EXI_CHANNEL_0, (void*)buffer, len, EXI_WRITE) == 0) ret |= 0x04;
+	if (EXI_Deselect(EXI_CHANNEL_0) == 0) ret |= 0x08;
+	if (EXI_Unlock(EXI_CHANNEL_0) == 0) ret |= 0x10;
 
 	return len;
 }
 
 #define __outsz 256
 
-
 static char __outstr[__outsz];
 
-static ssize_t __uart_stdio_write(const char *ptr, size_t len)
-{
+static ssize_t __uart_stdio_write(const char* ptr, size_t len) {
 	// translate \n and \r\n to \r for Dolphin handling
-	const char *p = ptr;
-	size_t left = len;
-	while(left>0) {
-		char *buf = __outstr;
+	const char* p = ptr;
+	size_t      left = len;
+	while (left > 0) {
+		char*  buf = __outstr;
 		size_t buflen = len;
 		if (buflen > __outsz) buflen = __outsz;
 		left -= buflen;
-		while(buflen>0) {
+		while (buflen > 0) {
 			char ch = *p++;
-			if(ch=='\r' && *p == '\n') continue;
-			if (ch=='\n') ch = '\r';
+			if (ch == '\r' && *p == '\n') continue;
+			if (ch == '\n') ch = '\r';
 			*buf++ = ch;
 			buflen--;
 		}
-		__uart_write(__outstr,len);
+		__uart_write(__outstr, len);
 	}
 	return len;
 }
 
-void SYS_STDIO_Report(bool use_stdout)
-{
+void SYS_STDIO_Report(bool use_stdout) {
 	fflush(stderr);
 	setvbuf(stderr, NULL, _IONBF, 0);
-	if(use_stdout)
-	{
+	if (use_stdout) {
 		fflush(stdout);
 		setvbuf(stdout, NULL, _IONBF, 0);
 	}
 }
 
-
-void SYS_Report (char* fmt_, ...)
-{
+void SYS_Report(char* fmt_, ...) {
 
 	size_t len;
 
 	va_list args;
 
 	va_start(args, fmt_);
-	len=vsnprintf(__outstr,256,fmt_,args);
+	len = vsnprintf(__outstr, 256, fmt_, args);
 	va_end(args);
 
 	__uart_stdio_write(__outstr, len);
-
 }
-

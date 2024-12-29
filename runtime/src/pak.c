@@ -43,7 +43,8 @@ static void patch_Model(struct Model* model, u8* const pakBase, struct PAKHeader
 		m->texture = pakBase + (uintptr_t)m->texture;
 	}
 
-	for (struct MeshPrimitive* p = model->primitive_table; p < model->primitive_table + model->primitive_table_count; p++) {
+	for (struct MeshPrimitive* p = model->primitive_table; p < model->primitive_table + model->primitive_table_count;
+	     p++) {
 		p->attr_pos = model->accessor_table + (uintptr_t)p->attr_pos;
 		p->attr_normal = model->accessor_table + (uintptr_t)p->attr_normal;
 		p->attr_tangent = model->accessor_table + (uintptr_t)p->attr_tangent;
@@ -67,11 +68,11 @@ static void patch_Model(struct Model* model, u8* const pakBase, struct PAKHeader
 	}
 }
 
-static void patch_DirectoryEntry(struct DirectoryEntry* entry, u8* const pakBase, struct PAKHeader* hdr) {	
+static void patch_DirectoryEntry(struct DirectoryEntry* entry, u8* const pakBase, struct PAKHeader* hdr) {
 	entry->name = hdr->string_table + (uintptr_t)entry->name;
 	entry->offset = pakBase + (uintptr_t)entry->offset;
 
-	switch(entry->type) {
+	switch (entry->type) {
 	case ASSET_TYPE_MODEL:
 		patch_Model((struct Model*)entry->offset, pakBase, hdr);
 		break;
