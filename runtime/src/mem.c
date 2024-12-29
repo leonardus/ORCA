@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 void mem_preinit(void) {
 	extern void* __myArena1Lo;
 	extern void* __myArena1Hi;
-	__myArena1Lo = *(void**)0x80000030;
-	__myArena1Hi = *(void**)0x80000034;
+	__myArena1Lo = *(void**)0x80000030; /* NULL with retail-compatible apploader.
+	                                       Default value provided by linker script is OK. */
+	__myArena1Hi = *(void**)0x80000034; /* Apploader sets this value to address of FST. */
 }
