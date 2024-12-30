@@ -16,7 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdlib.h>
+#include <stdint.h>
+#include <gccore.h>
 #include "mem.h"
+#include "render.h"
+#include "sys_report.h"
+
+void mem_checkalign(void* p, size_t alignment, char const* info) {
+	if ((uintptr_t)p % alignment != 0) {
+		SYS_Report("FATAL: Memory address %p not aligned to %uB", p, alignment);
+		if (info != NULL) SYS_Report(" (%s)", info);
+		SYS_Report("\n");
+		exit(1);
+	}
+}
 
 /*
  * libogc2's SYS_Init() calls __lowmem_init(), which sets ArenaHi and ArenaLo
@@ -33,4 +47,18 @@ void mem_preinit(void) {
 	__myArena1Lo = *(void**)0x80000030; /* NULL with retail-compatible apploader.
 	                                       Default value provided by linker script is OK. */
 	__myArena1Hi = *(void**)0x80000034; /* Apploader sets this value to address of FST. */
+}
+
+struct MemoryLayout mem_init(size_t heapSize) {
+	struct MemoryLayout mem;
+	mem.RenderXFB = SYS_AllocArenaMemHi(render_get_xfbsz(), 32);
+	mem.RenderFIFO = SYS_AllocArenaMemHi(render_get_fifosz(), 32);
+
+	void* levelTop = SYS_GetArenaHi();
+	mem.LevelData = SYS_AllocArenaMemHi((uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo() - heapSize, 32);
+	mem.LevelCapacity = (uintptr_t)levelTop - (uintptr_t)mem.LevelData;
+
+	mem.HeapCapacity = (uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo();
+
+	return mem;
 }

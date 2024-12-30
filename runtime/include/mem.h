@@ -16,4 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+struct MemoryLayout {
+	void*  RenderXFB;
+	void*  RenderFIFO;
+	void*  LevelData;
+	size_t LevelCapacity;
+	size_t HeapCapacity;
+};
+
+void mem_checkalign(void* p, size_t alignment, char const* info);
+
 void mem_preinit(void);
+
+struct MemoryLayout mem_init(size_t heapSize);
