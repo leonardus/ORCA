@@ -158,13 +158,6 @@ static void al_check_dol(struct dol_header* h) {
 	int      i, valid = 0;
 	uint32_t value;
 
-	size_t dol_length = 0;
-	dol_length += sizeof(struct dol_header);
-	for (size_t i = 0; i < DOL_SECT_MAX_TEXT; i++)
-		dol_length += ROUNDUP32(h->size_text[i]);
-	for (size_t i = 0; i < DOL_SECT_MAX_DATA; i++)
-		dol_length += ROUNDUP32(h->size_data[i]);
-
 	/* now perform some sanity checks */
 	for (i = 0; i < DOL_MAX_SECT; i++) {
 		/* DOL segment MAY NOT be physically stored in the header */
@@ -182,11 +175,6 @@ static void al_check_dol(struct dol_header* h) {
 		value = dol_sect_address(h, i);
 		if (value != (uint32_t)di_align(value)) {
 			panic("unaligned section address");
-		}
-
-		/* end of physical storage must be within file */
-		if (dol_sect_offset(h, i) + dol_sect_size(h, i) > dol_length) {
-			panic("segment past DOL file size");
 		}
 
 		if (dol_sect_address(h, i) != 0) {
