@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <gccore.h>
 #include "fst.h"
@@ -126,32 +127,31 @@ static void init_lowmem(void) {
 	/* FST is loaded by retail apploader at top of memory */
 	size_t const memSize = *((u32*)(SYS_BASE_CACHED + 0xF0));
 	*FSTBase = (struct FSTEntry*)(SYS_BASE_CACHED + memSize - ROUNDUP32(*FSTMaxLength));
-	SYS_Report("FST Base: %p\n", *FSTBase);
+	printf("FST Base: %p\n", *FSTBase);
 }
 
 static void check_fst(void) {
 	for (struct FSTEntry* entry = *FSTBase; entry < *FSTBase + (*FSTBase)->length; entry++) {
 		if (entry->offset % 4 != 0) {
-			SYS_Report("WARNING: File \"%s\" has misaligned disc offset 0x%x\n", fst_get_filename(entry),
-			           entry->offset);
+			printf("WARNING: File \"%s\" has misaligned disc offset 0x%x\n", fst_get_filename(entry), entry->offset);
 		}
 	}
 }
 static void print_fst(void) {
-	SYS_Report("[    FST    ] ");
+	printf("[    FST    ] ");
 	u32 numEntries = (*FSTBase)->length;
-	SYS_Report("Total entries: %u\n", numEntries);
+	printf("Total entries: %u\n", numEntries);
 	for (int i = 0; i < numEntries; i++) {
 		struct FSTEntry* entry = *FSTBase + i;
-		SYS_Report("[%d] %s\n", i, fst_get_filename(entry));
-		SYS_Report("Type: ");
+		printf("[%d] %s\n", i, fst_get_filename(entry));
+		printf("Type: ");
 		if (entry->ident & 0xFF000000) {
-			SYS_Report("Directory\n");
+			printf("Directory\n");
 		} else {
-			SYS_Report("File\n");
+			printf("File\n");
 		}
-		SYS_Report("Offset: %u\n", entry->offset);
-		SYS_Report("Length: %u\n", entry->length);
+		printf("Offset: %u\n", entry->offset);
+		printf("Length: %u\n", entry->length);
 	}
 }
 

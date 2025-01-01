@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdio.h>
 #include "pak.h"
 
 static void patch_Model(struct Model* model, u8* const pakBase, struct PAKHeader* hdr) {
@@ -82,7 +83,7 @@ static void patch_DirectoryEntry(struct DirectoryEntry* entry, u8* const pakBase
 		break;
 	default:
 #ifdef DEBUG
-		SYS_Report("WARNING: Unrecognized asset type %u.\n", entry->type);
+		printf("WARNING: Unrecognized asset type %u.\n", entry->type);
 #endif
 	}
 }

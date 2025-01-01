@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdio.h>
 #include <gccore.h>
 #include "fst.h"
 #include "mem.h"
@@ -31,8 +32,9 @@ static void done_pak(s32 bytes_read, void* orcamem) {
 }
 
 int main(void) {
-	SYS_Report("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
-	SYS_Report("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
+	CON_EnableBarnacle(EXI_CHANNEL_0, EXI_DEVICE_1);
+	printf("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
+	printf("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
 	struct MemoryLayout mem = mem_init(0x100000); // 1MB
 	render_init(mem.RenderXFB, mem.RenderFIFO);

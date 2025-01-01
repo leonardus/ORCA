@@ -17,17 +17,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <gccore.h>
 #include "mem.h"
 #include "render.h"
-#include "sys_report.h"
 
 void mem_checkalign(void* p, size_t alignment, char const* info) {
 	if ((uintptr_t)p % alignment != 0) {
-		SYS_Report("FATAL: Memory address %p not aligned to %uB", p, alignment);
-		if (info != NULL) SYS_Report(" (%s)", info);
-		SYS_Report("\n");
+		printf("FATAL: Memory address %p not aligned to %uB", p, (uint32_t)alignment);
+		if (info != NULL) printf(" (%s)", info);
+		printf("\n");
 		exit(1);
 	}
 }
