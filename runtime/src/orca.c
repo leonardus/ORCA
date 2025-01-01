@@ -32,7 +32,9 @@ static void done_pak(s32 bytes_read, void* orcamem) {
 }
 
 int main(void) {
+#ifdef DEBUG
 	CON_EnableBarnacle(EXI_CHANNEL_0, EXI_DEVICE_1);
+#endif
 	printf("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
 	printf("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
