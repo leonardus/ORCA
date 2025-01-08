@@ -218,7 +218,7 @@ static void al_enter(void (*_report)(char* text, ...)) {
 	al_control.step = 1;
 	al_control.report = _report;
 	report = _report;
-	if (report) report("ORCA Freeloader built " __DATE__ " " __TIME__ "\n");
+	if (report) report("* ORCA Freeloader built " __DATE__ " " __TIME__ "\n");
 }
 
 /*
