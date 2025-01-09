@@ -16,19 +16,47 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <gccore.h>
 #include "fst.h"
 #include "mem.h"
 #include "pak.h"
 #include "render.h"
 
+static struct PAKHeader* g_pak = NULL;
+static Mtx               g_camera;
+
 void __SYS_PreInit(void) {
 	mem_preinit();
 }
 
-static void done_pak(s32 bytes_read, void* orcamem) {
+static struct Node* first_node_name(struct Model* m, char* name) {
+	for (size_t i = 0; i < m->node_table_count; i++) {
+		if (strcmp(name, m->node_table[i].name) == 0) return &m->node_table[i];
+	}
+	return NULL;
+}
+
+static void done_pak(s32 bytesRead, void* orcamem) {
 	pak_init(orcamem);
+	struct PAKHeader* pak = orcamem;
+
+	struct Node* duck = first_node_name(pak->directory[0].offset, "Duck");
+	struct Node* camera = first_node_name(pak->directory[0].offset, "Camera");
+	if (duck == NULL || camera == NULL) {
+		printf("Could not find node\n");
+		exit(1);
+	}
+	// camera->translation[0] /= 3;
+	// camera->translation[1] /= 3;
+	// camera->translation[2] /= 3;
+	printf("Camera: (%f, %f, %f)\tTarget: (%f, %f, %f)\n", ((guVector*)camera->translation)->x,
+	       ((guVector*)camera->translation)->y, ((guVector*)camera->translation)->z, ((guVector*)duck->translation)->x,
+	       ((guVector*)duck->translation)->y, ((guVector*)duck->translation)->z);
+	guLookAt(g_camera, (guVector*)camera->translation, &(guVector){0, 1, 0}, (guVector*)duck->translation);
+
+	g_pak = pak;
 }
 
 int main(void) {
@@ -42,9 +70,11 @@ int main(void) {
 	render_init(mem.RenderXFB, mem.RenderFIFO);
 	fst_init();
 
+	fst_read_file(fst_resolve_path("duck.PAK"), mem.LevelData, done_pak, mem.LevelData);
+
 	render_ready();
 	while (1) {
-		render_tick();
+		render_tick(g_camera, g_pak);
 	}
 
 	return 0;

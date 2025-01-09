@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdlib.h>
 #include <gccore.h>
 #include "mem.h"
+#include "pak.h"
 
 static void* g_XFB = NULL;
 
@@ -64,6 +66,13 @@ void render_init(void* xfb, void* fifo) {
 #else
 	GX_SetCopyClear((GXColor){0, 0, 0, 0}, GX_MAX_Z24);
 #endif
+	GX_SetViewport(0.0F, 0.0F, rmode->fbWidth, rmode->xfbHeight, 0.0F, 1.0F);
+	GX_SetCullMode(GX_CULL_NONE);
+	GX_SetClipMode(GX_CLIP_DISABLE);
+
+	static Mtx44 proj;
+	guPerspective(proj, 90, (float)rmode->fbWidth / (float)rmode->xfbHeight, 1.0F, 10000.0F);
+	GX_LoadProjectionMtx(proj, GX_PERSPECTIVE);
 }
 
 void render_ready(void) {
@@ -74,7 +83,76 @@ void render_ready(void) {
 	VIDEO_Flush();
 }
 
-void render_tick(void) {
+static void draw_primitive(struct MeshPrimitive* const p) {
+	if (p->indices == NULL) {
+		printf("Not yet implemented/%s:%u\n", __func__, __LINE__);
+		exit(1);
+		return;
+	}
+
+	GX_ClearVtxDesc();
+	GX_SetVtxDesc(GX_VA_POS, GX_INDEX16);
+	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+
+	size_t stride = 0;
+	switch (p->attr_pos->component_type) {
+	case GX_U8:
+		stride = sizeof(uint8_t);
+		break;
+	case GX_S8:
+		stride = sizeof(int8_t);
+		break;
+	case GX_U16:
+		stride = sizeof(uint16_t);
+		break;
+	case GX_S16:
+		stride = sizeof(int16_t);
+		break;
+	case GX_F32:
+		stride = sizeof(float);
+		break;
+	}
+	stride *= 3;
+
+	GX_SetArray(GX_VA_POS, p->attr_pos->buffer, stride);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, p->attr_pos->component_type, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
+
+	GX_Begin(p->mode, GX_VTXFMT0, p->indices->count);
+	for (size_t i = 0; i < p->indices->count; i++) {
+		GX_Position1x16(((uint16_t*)p->indices->buffer)[i]);
+		GX_Color3u8(255, 255, 255);
+	}
+	GX_End();
+}
+
+static void draw_model(Mtx camera, struct Model* m) {
+	for (size_t i = 0; i < m->node_table_count; i++) {
+		struct Node* const n = &m->node_table[i];
+		if (n->mesh == NULL) continue;
+		Mtx mv;
+		guMtxIdentity(mv);
+		c_guMtxQuat(mv, (guQuaternion*)n->rotation);
+		guMtxScaleApply(mv, mv, n->scale[0], n->scale[1], n->scale[2]);
+		guMtxTransApply(mv, mv, n->translation[0], n->translation[1], n->translation[2]);
+		guMtxConcat(camera, mv, mv);
+		GX_LoadPosMtxImm(mv, GX_PNMTX0);
+		GX_SetCurrentMtx(GX_PNMTX0);
+
+		for (size_t j = 0; j < n->mesh->primitives_count; j++) {
+			draw_primitive(&m->primitive_table[n->mesh->primitives[j]]);
+		}
+	}
+}
+
+void render_tick(Mtx camera, struct PAKHeader* pak) {
+	if (pak != NULL) {
+		for (size_t i = 0; i < pak->directory_count; i++) {
+			struct DirectoryEntry* e = &pak->directory[i];
+			if (e->type != ASSET_TYPE_MODEL) continue;
+			draw_model(camera, e->offset);
+		}
+	}
 	GX_CopyDisp(g_XFB, GX_TRUE);
 	VIDEO_WaitVSync();
 }

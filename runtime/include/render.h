@@ -18,13 +18,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 #include <stddef.h>
+#include <gccore.h>
+#include "pak.h"
 
 size_t render_get_xfbsz(void);
-
 size_t render_get_fifosz(void);
 
 void render_init(void* xfb, void* fifo);
-
 void render_ready(void);
-
-void render_tick(void);
+void render_tick(Mtx camera, struct PAKHeader* pak);
