@@ -67,10 +67,10 @@ int main(void) {
 	printf("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
 	struct MemoryLayout mem = mem_init(0x100000); // 1MB
-	render_init(mem.RenderXFB, mem.RenderFIFO);
+	render_init(mem.renderXFB, mem.renderFIFO);
 	fst_init();
 
-	fst_read_file(fst_resolve_path("duck.PAK"), mem.LevelData, done_pak, mem.LevelData);
+	fst_read_file(fst_resolve_path("duck.PAK"), mem.levelData, done_pak, mem.levelData);
 
 	render_ready();
 	while (1) {

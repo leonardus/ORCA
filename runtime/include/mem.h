@@ -20,11 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stddef.h>
 
 struct MemoryLayout {
-	void*  RenderXFB;
-	void*  RenderFIFO;
-	void*  LevelData;
-	size_t LevelCapacity;
-	size_t HeapCapacity;
+	void*  renderXFB;
+	void*  renderFIFO;
+	void*  levelData;
+	size_t levelCapacity;
+	size_t heapCapacity;
 };
 
 void mem_checkalign(void* p, size_t alignment, char const* info);

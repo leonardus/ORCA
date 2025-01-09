@@ -51,14 +51,14 @@ void mem_preinit(void) {
 
 struct MemoryLayout mem_init(size_t heapSize) {
 	struct MemoryLayout mem;
-	mem.RenderXFB = SYS_AllocArenaMemHi(render_get_xfbsz(), 32);
-	mem.RenderFIFO = SYS_AllocArenaMemHi(render_get_fifosz(), 32);
+	mem.renderXFB = SYS_AllocArenaMemHi(render_get_xfbsz(), 32);
+	mem.renderFIFO = SYS_AllocArenaMemHi(render_get_fifosz(), 32);
 
 	void* levelTop = SYS_GetArenaHi();
-	mem.LevelData = SYS_AllocArenaMemHi((uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo() - heapSize, 32);
-	mem.LevelCapacity = (uintptr_t)levelTop - (uintptr_t)mem.LevelData;
+	mem.levelData = SYS_AllocArenaMemHi((uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo() - heapSize, 32);
+	mem.levelCapacity = (uintptr_t)levelTop - (uintptr_t)mem.levelData;
 
-	mem.HeapCapacity = (uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo();
+	mem.heapCapacity = (uintptr_t)SYS_GetArenaHi() - (uintptr_t)SYS_GetArenaLo();
 
 	return mem;
 }
