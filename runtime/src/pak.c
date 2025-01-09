@@ -31,7 +31,7 @@ static void patch_Model(struct Model* model, u8* const pakBase, struct PAKHeader
 	for (struct Node* n = model->node_table; n < model->node_table + model->node_table_count; n++) {
 		n->name = hdr->string_table + (uintptr_t)n->name;
 		n->children = model->index_table + (uintptr_t)n->children;
-		n->mesh = model->mesh_table + (uintptr_t)n->mesh;
+		n->mesh = (uintptr_t)n->mesh == UINT32_MAX ? NULL : model->mesh_table + (uintptr_t)n->mesh;
 	}
 
 	for (struct Mesh* m = model->mesh_table; m < model->mesh_table + model->mesh_table_count; m++) {
@@ -46,21 +46,78 @@ static void patch_Model(struct Model* model, u8* const pakBase, struct PAKHeader
 
 	for (struct MeshPrimitive* p = model->primitive_table; p < model->primitive_table + model->primitive_table_count;
 	     p++) {
-		p->attr_pos = model->accessor_table + (uintptr_t)p->attr_pos;
-		p->attr_normal = model->accessor_table + (uintptr_t)p->attr_normal;
-		p->attr_tangent = model->accessor_table + (uintptr_t)p->attr_tangent;
-		p->attr_st_0 = model->accessor_table + (uintptr_t)p->attr_st_0;
-		p->attr_st_1 = model->accessor_table + (uintptr_t)p->attr_st_1;
-		p->attr_vc_0 = model->accessor_table + (uintptr_t)p->attr_vc_0;
-		p->attr_joints_0 = model->accessor_table + (uintptr_t)p->attr_joints_0;
-		p->attr_weights_0 = model->accessor_table + (uintptr_t)p->attr_weights_0;
-		p->indices = model->accessor_table + (uintptr_t)p->indices;
-		p->material = model->material_table + (uintptr_t)p->material;
+
+		p->attr_pos = (uintptr_t)p->attr_pos == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_pos;
+		p->attr_normal =
+		    (uintptr_t)p->attr_normal == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_normal;
+		p->attr_tangent =
+		    (uintptr_t)p->attr_tangent == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_tangent;
+		p->attr_st_0 = (uintptr_t)p->attr_st_0 == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_st_0;
+		p->attr_st_1 = (uintptr_t)p->attr_st_1 == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_st_1;
+		p->attr_vc_0 = (uintptr_t)p->attr_vc_0 == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_vc_0;
+		p->attr_joints_0 =
+		    (uintptr_t)p->attr_joints_0 == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_joints_0;
+		p->attr_weights_0 =
+		    (uintptr_t)p->attr_weights_0 == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->attr_weights_0;
+		p->indices = (uintptr_t)p->indices == UINT32_MAX ? NULL : model->accessor_table + (uintptr_t)p->indices;
+		p->material = (uintptr_t)p->material == UINT32_MAX ? NULL : model->material_table + (uintptr_t)p->material;
+
+		switch ((enum PrimitiveMode)p->mode) {
+		case MODE_POINTS:
+			p->mode = GX_POINTS;
+			break;
+		case MODE_LINES:
+			p->mode = GX_LINES;
+			break;
+		case MODE_LINE_LOOP:
+			p->mode = GX_LINESTRIP;
+			break;
+		case MODE_LINE_STRIP:
+			p->mode = GX_LINESTRIP;
+			break;
+		case MODE_TRIANGLES:
+			p->mode = GX_TRIANGLES;
+			break;
+		case MODE_TRIANGLE_STRIP:
+			p->mode = GX_TRIANGLESTRIP;
+			break;
+		case MODE_TRAINGLE_FAN:
+			p->mode = GX_TRIANGLEFAN;
+			break;
+		default:
+			printf("WARNING: Unrecognized primitive mode.\n");
+			break;
+		}
 	}
 
 	for (struct Accessor* a = model->accessor_table; a < model->accessor_table + model->accessor_table_count; a++) {
 		a->name = hdr->string_table + (uintptr_t)a->name;
 		a->buffer = pakBase + (uintptr_t)a->buffer;
+
+		switch ((enum ComponentType)a->component_type) {
+		case BYTE:
+			a->component_type = GX_U8;
+			break;
+		case UNSIGNED_BYTE:
+			a->component_type = GX_S8;
+			break;
+		case SHORT:
+			a->component_type = GX_S16;
+			break;
+		case UNSIGNED_SHORT:
+			a->component_type = GX_U16;
+			break;
+		case UNSIGNED_INT:
+			// GX has no corresponding component type. Handle this properly later.
+			a->component_type = UINT8_MAX;
+			break;
+		case FLOAT:
+			a->component_type = GX_F32;
+			break;
+		default:
+			printf("WARNING: Unrecognized component type.\n");
+			break;
+		}
 	}
 
 	for (struct Scene* s = model->scene_table; s < model->scene_table + model->scene_table_count; s++) {
