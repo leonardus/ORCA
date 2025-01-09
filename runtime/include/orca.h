@@ -16,4 +16,5 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#pragma once
 #define ROUNDUP32(x) (((u32)(x) + 0x1f) & ~0x1f)
