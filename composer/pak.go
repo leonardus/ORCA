@@ -514,7 +514,7 @@ func packAccessors(model Model, pak Pak) (err error) {
 			Name:          name,
 			BufferOffset:  bufferOffset,
 			Count:         uint32(accessor.Count),
-			ComponentType: uint8(accessor.ComponentType - 5120),
+			ComponentType: uint8(accessor.ComponentType),
 			ElementType:   elementType,
 		})
 	}

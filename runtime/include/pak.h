@@ -30,7 +30,7 @@ enum PrimitiveMode {
 	MODE_TRAINGLE_FAN
 };
 
-enum ComponentType { BYTE = 0, UNSIGNED_BYTE, SHORT, UNSIGNED_SHORT, UNSIGNED_INT, FLOAT };
+enum ComponentType { FLOAT = 0, BYTE, UNSIGNED_BYTE, SHORT, UNSIGNED_SHORT, UNSIGNED_INT };
 
 enum ElementType { SCALAR = 0, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
 
