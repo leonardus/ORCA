@@ -295,6 +295,9 @@ func packPrimitives(model Model, pak Pak) (idxs map[*gltf.Primitive]int, err err
 			var indices uint32 = UINT32_MAX
 			if primitive.Indices != nil {
 				indices = uint32(*primitive.Indices)
+				if model.Asset.Accessors[*primitive.Indices].ComponentType == gltf.ComponentUint {
+					return nil, fmt.Errorf(`indices accessor component type must not be uint32`)
+				}
 			}
 			var material uint32 = UINT32_MAX
 			if primitive.Material != nil {
