@@ -103,18 +103,27 @@ static void draw_primitive(struct MeshPrimitive* const p) {
 	}
 	if (p->attrPos == NULL) return;
 
+	bool const             isTextured = p->material && (p->attrTexCoord0 || p->attrTexCoord1);
+	struct Accessor* const texCoord = p->attrTexCoord0 ? p->attrTexCoord0 : p->attrTexCoord1;
+	if (isTextured) GX_LoadTexObj(p->material->texture, GX_TEXMAP0);
+
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_POS, GX_INDEX16);
 	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+	if (isTextured) GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX16);
 
 	GX_SetArray(GX_VA_POS, p->attrPos->buffer, p->attrPos->stride);
+	if (isTextured) GX_SetArray(GX_VA_TEX0, texCoord->buffer, texCoord->stride);
+
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, p->attrPos->componentType, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
+	if (isTextured) GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, texCoord->componentType, 0);
 
 	GX_Begin(p->mode, GX_VTXFMT0, p->indices->count);
 	for (size_t i = 0; i < p->indices->count; i++) {
 		GX_Position1x16(((uint16_t*)p->indices->buffer)[i]);
 		GX_Color3u8(255, 255, 255);
+		if (isTextured) GX_TexCoord1x16(((uint16_t*)p->indices->buffer)[i]);
 	}
 	GX_End();
 }
