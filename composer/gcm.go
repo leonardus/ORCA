@@ -207,6 +207,9 @@ func GCM(id GameID, apploaderPath string, dolPath string, fstRootPath string) (g
 	if err != nil {
 		return nil, err
 	}
+	if len(apploader) > 0x100000 { // 1MB
+		return nil, fmt.Errorf(`apploader size exceeded 1MB`)
+	}
 	gcm = AppendOrPanic(gcm, binary.BigEndian, apploader)
 
 	fstState, err := buildFST(fstRootPath)
