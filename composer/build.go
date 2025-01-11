@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ import (
 )
 
 type Level struct {
-	GLTF   []string
-	Script []string
+	GLTF   map[string]string
+	Script map[string]string
 }
 
 type Manifest struct {
@@ -101,6 +101,10 @@ func (r *BuildCmd) Run() error {
 	}
 
 	for id, level := range manifest.Levels {
+		if (len(id)) > 63 {
+			return fmt.Errorf(`level name exceeded maximum of 63 characters`)
+		}
+
 		buf, err := PackLevel(level, r.Dir)
 		if err != nil {
 			return err

@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -85,6 +85,9 @@ type BinAccessor struct {
 type BinMaterial struct {
 	Name                   uint32
 	BaseColorTextureOffset uint32
+	BaseColorTextureLength uint32
+	Width                  uint16
+	Height                 uint16
 	TexCoord               uint8
 	Format                 uint8
 	WrapS                  uint8
@@ -311,6 +314,10 @@ func packPrimitives(model Model, pak Pak) (idxs map[*gltf.Primitive]int, err err
 				gltf.PrimitiveTriangleFan:   6,
 			}[primitive.Mode]
 
+			if primitive.Mode == gltf.PrimitiveLineLoop {
+				return nil, fmt.Errorf(`unsupported primitive mode: line loop`)
+			}
+
 			primitives = append(primitives, BinMeshPrimitive{
 				AttrPos:      attributes["POSITION"],
 				AttrNormal:   attributes["NORMAL"],
@@ -392,8 +399,10 @@ func packMaterials(model Model, pak Pak) (err error) {
 		gltf.WrapRepeat:         2,
 	}
 	for _, material := range model.Asset.Materials {
+		texture := model.Asset.Textures[material.PBRMetallicRoughness.BaseColorTexture.Index] // TODO: Handle nil
+
 		var wrapS, wrapT uint8
-		sampler := model.Asset.Textures[material.PBRMetallicRoughness.BaseColorTexture.Index].Sampler
+		sampler := texture.Sampler
 		if sampler != nil {
 			wrapS = wrapMode[model.Asset.Samplers[*sampler].WrapS]
 			wrapT = wrapMode[model.Asset.Samplers[*sampler].WrapT]
@@ -412,7 +421,6 @@ func packMaterials(model Model, pak Pak) (err error) {
 			return err
 		}
 		texOffset := uint32(len(*pak.Buffer))
-		texture := model.Asset.Textures[material.PBRMetallicRoughness.BaseColorTexture.Index]
 		var source []byte
 		if model.Asset.Images[*texture.Source].BufferView == nil {
 			source, err = model.Asset.Images[*texture.Source].MarshalData()
@@ -427,11 +435,31 @@ func packMaterials(model Model, pak Pak) (err error) {
 		if err != nil {
 			return fmt.Errorf(`could not decode image (%w)`, err)
 		}
-		*pak.Buffer = AppendOrPanic(*pak.Buffer, binary.BigEndian, toRGB5A3(im))
+		texBytes := toRGB5A3(im)
+		texLength := uint32(len(texBytes))
+		*pak.Buffer = AppendOrPanic(*pak.Buffer, binary.BigEndian, texBytes)
+
+		width := uint16(im.Bounds().Dx())
+		height := uint16(im.Bounds().Dy())
+		if width > 1024 {
+			return fmt.Errorf(`texture width exceeded 1024px`)
+		}
+		if height > 1024 {
+			return fmt.Errorf(`texture height exceeded 1024px`)
+		}
+		if (wrapS == 1 || wrapS == 2) && width&(width-1) != 0 {
+			return fmt.Errorf(`texture width must be power of 2 with mirror or repeat wrapS`)
+		}
+		if (wrapS == 1 || wrapS == 2) && height&(height-1) != 0 {
+			return fmt.Errorf(`texture height must be power of 2 with mirror or repeat wrapT`)
+		}
 
 		materials = append(materials, BinMaterial{
 			Name:                   name,
 			BaseColorTextureOffset: texOffset,
+			BaseColorTextureLength: texLength,
+			Width:                  uint16(im.Bounds().Dx()),
+			Height:                 uint16(im.Bounds().Dy()),
 			TexCoord:               uint8(material.PBRMetallicRoughness.BaseColorTexture.TexCoord),
 			Format:                 uint8(8), // RGB5A3. TODO: support different formats
 			WrapS:                  wrapS,
@@ -546,7 +574,7 @@ func PackLevel(level Level, root string) (buf []byte, err error) {
 	}
 	buf = AppendOrPanic(buf, binary.BigEndian, header)
 
-	for _, path := range level.GLTF {
+	for name, path := range level.GLTF {
 		fmt.Println("Packing", path)
 		asset, err := gltf.Open(filepath.Join(root, "assets", path))
 		if err != nil {
@@ -598,7 +626,7 @@ func PackLevel(level Level, root string) (buf []byte, err error) {
 			Type:   0,
 		}
 		*pak.Buffer = AppendOrPanic(*pak.Buffer, binary.BigEndian, model.Directory)
-		*pak.StringTable = append(*pak.StringTable, ToCString(path)...)
+		*pak.StringTable = append(*pak.StringTable, ToCString(name)...)
 		*pak.Directory = append(*pak.Directory, entry)
 	}
 

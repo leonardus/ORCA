@@ -4,9 +4,9 @@ name: 'ORCA Demo'
 gameid: 'G25EO2'
 version: 0
 levels:
-    duck:
+    ~default:
         gltf:
-            - 'Duck.glb'
+            ~default: 'Duck.glb'
         script:
-            - 'demo.lua'
+            main: 'demo.lua'
 ...

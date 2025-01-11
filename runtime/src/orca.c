@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,39 +24,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "pak.h"
 #include "render.h"
 
-static struct PAKHeader* g_pak = NULL;
-static Mtx               g_camera;
-
 void __SYS_PreInit(void) {
 	mem_preinit();
 }
 
 static struct Node* first_node_name(struct Model* m, char* name) {
-	for (size_t i = 0; i < m->node_table_count; i++) {
-		if (strcmp(name, m->node_table[i].name) == 0) return &m->node_table[i];
+	for (struct Node* n = m->nodes; n < m->nodes + m->numNodes; n++) {
+		if (n->name == NULL) continue;
+		if (strcmp(name, n->name) == 0) return n;
 	}
 	return NULL;
-}
-
-static void done_pak(s32 bytesRead, void* orcamem) {
-	pak_init(orcamem);
-	struct PAKHeader* pak = orcamem;
-
-	struct Node* duck = first_node_name(pak->directory[0].offset, "Duck");
-	struct Node* camera = first_node_name(pak->directory[0].offset, "Camera");
-	if (duck == NULL || camera == NULL) {
-		printf("Could not find node\n");
-		exit(1);
-	}
-	// camera->translation[0] /= 3;
-	// camera->translation[1] /= 3;
-	// camera->translation[2] /= 3;
-	printf("Camera: (%f, %f, %f)\tTarget: (%f, %f, %f)\n", ((guVector*)camera->translation)->x,
-	       ((guVector*)camera->translation)->y, ((guVector*)camera->translation)->z, ((guVector*)duck->translation)->x,
-	       ((guVector*)duck->translation)->y, ((guVector*)duck->translation)->z);
-	guLookAt(g_camera, (guVector*)camera->translation, &(guVector){0, 1, 0}, (guVector*)duck->translation);
-
-	g_pak = pak;
 }
 
 int main(void) {
@@ -66,15 +43,36 @@ int main(void) {
 	printf("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
 	printf("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
 
-	struct MemoryLayout mem = mem_init(0x100000); // 1MB
-	render_init(mem.renderXFB, mem.renderFIFO);
+	mem_init(0x100000); // 1MB
+	render_init();
 	fst_init();
 
-	fst_read_file(fst_resolve_path("duck.PAK"), mem.levelData, done_pak, mem.levelData);
+	struct Level* const level = pak_load("~default");
+	if (level == NULL) {
+		printf("ERROR: Could not locate default level (~default.PAK)\n");
+		exit(1);
+	}
+	struct Model* model = NULL;
+	for (struct Asset* a = level->assets; a < level->assets + level->numAssets; a++) {
+		if (a->type == ASSET_MODEL && strcmp(a->name, "~default") == 0) {
+			model = a->addr;
+			break;
+		}
+	}
+
+	if (model != NULL) {
+		struct Node* const camera = first_node_name(model, "Camera");
+		struct Node* const duck = first_node_name(model, "Duck");
+		if (camera != NULL && duck != NULL) {
+			Mtx mtx;
+			guLookAt(mtx, &camera->translation, &(guVector){0, 1, 0}, &duck->translation);
+			render_set_camera(mtx);
+		}
+	}
 
 	render_ready();
 	while (1) {
-		render_tick(g_camera, g_pak);
+		render_tick(model);
 	}
 
 	return 0;

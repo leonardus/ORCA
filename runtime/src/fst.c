@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -98,7 +98,13 @@ static void done_read_file(s32 bytes_read, dvdcmdblk* block) {
 	free(block);
 }
 
-int fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud) {
+int fst_read_async(struct FSTEntry* entry, void* buffer, size_t length, off_t offset, fstreadcb cb, void* ud) {
+#ifdef DEBUG
+	if (offset % 4 != 0) {
+		printf("DVD read offset must be multiple of 4\n");
+		exit(1);
+	}
+#endif
 	if (fst_isdir(entry)) return -1;
 
 	struct ExtDVDUD* extud = calloc(1, sizeof(struct ExtDVDUD));
@@ -107,7 +113,22 @@ int fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud) 
 
 	dvdcmdblk* block = calloc(1, sizeof(dvdcmdblk));
 	DVD_SetUserData(block, extud);
-	DVD_ReadAbsAsync(block, buffer, ROUNDUP32(entry->length), entry->offset, done_read_file);
+	DVD_ReadAbsAsync(block, buffer, ROUNDUP32(length), entry->offset + offset, done_read_file);
+
+	return 0;
+}
+
+int fst_read_sync(struct FSTEntry* entry, void* buffer, size_t length, off_t offset) {
+#ifdef DEBUG
+	if (offset % 4 != 0) {
+		printf("DVD read offset must be multiple of 4\n");
+		exit(1);
+	}
+#endif
+	if (fst_isdir(entry)) return -1;
+
+	dvdcmdblk block;
+	DVD_ReadAbs(&block, buffer, ROUNDUP32(length), entry->offset + offset);
 
 	return 0;
 }

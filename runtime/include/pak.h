@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,106 +19,123 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 #include <gccore.h>
 
-enum AssetType { ASSET_TYPE_MODEL = 0, ASSET_TYPE_SCRIPT, ASSET_TYPE_SOUND };
+enum AssetType { ASSET_MODEL, ASSET_SCRIPT, ASSET_SOUND };
 
-enum PrimitiveMode {
-	MODE_POINTS,
-	MODE_LINES,
-	MODE_LINE_LOOP,
-	MODE_LINE_STRIP,
-	MODE_TRIANGLES,
-	MODE_TRIANGLE_STRIP,
-	MODE_TRAINGLE_FAN
+enum ComponentType {
+	COMPONENT_F32 = GX_F32,
+	COMPONENT_S8 = GX_S8,
+	COMPONENT_U8 = GX_U8,
+	COMPONENT_S16 = GX_S16,
+	COMPONENT_U16 = GX_U16,
+	COMPONENT_U32 // Not a supported GX component type. Used for accessors containing indices.
 };
 
-enum ComponentType { FLOAT = 0, BYTE, UNSIGNED_BYTE, SHORT, UNSIGNED_SHORT, UNSIGNED_INT };
+enum TexFormat {
+	TF_I4 = GX_TF_I4,
+	TF_I8 = GX_TF_I8,
+	TF_IA4 = GX_TF_IA4,
+	TF_IA8 = GX_TF_IA8,
+	TF_RGB565 = GX_TF_RGB565,
+	TF_RGB5A3 = GX_TF_RGB5A3,
+	TF_RGBA8 = GX_TF_RGBA8,
+	TF_CMPR = GX_TF_CMPR
+};
 
-enum ElementType { SCALAR = 0, VEC2, VEC3, VEC4, MAT2, MAT3, MAT4 };
+enum PrimitiveMode {
+	MODE_POINTS = GX_POINTS,
+	MODE_LINES = GX_LINES,
+	MODE_LINE_LOOP, // Not a supported GX rendering mode.
+	MODE_LINE_STRIP = GX_LINESTRIP,
+	MODE_TRIANGLES = GX_TRIANGLES,
+	MODE_TRIANGLE_STRIP = GX_TRIANGLESTRIP,
+	MODE_TRIANGLE_FAN = GX_TRIANGLEFAN
+};
+
+enum WrapMode { WRAP_CLAMP = GX_CLAMP, WRAP_REPEAT = GX_REPEAT, WRAP_MIRROR = GX_MIRROR };
+
+enum ElementType { ELEM_SCALAR, ELEM_VEC2, ELEM_VEC3, ELEM_VEC4, ELEM_MAT2, ELEM_MAT3, ELEM_MAT4 };
 
 struct Accessor {
-	char const* name;
-	void*       buffer;
-	size_t      count;
-	u8          component_type; // enum ComponentType
-	u8          element_type;   // enum ElementType
-	u8          _pad[2];
-} __attribute__((__packed__));
+	char const*        name;
+	void*              buffer;
+	size_t             count;
+	size_t             stride;
+	enum ComponentType componentType;
+	enum ElementType   elementType;
+};
 
 struct Material {
-	char const* name;
-	void*       texture;
-	u8          tex_coord;
-	u8          format;
-	u8          wrap_s;
-	u8          wrap_t;
-} __attribute__((__packed__));
+	char const*    name;
+	GXTexObj*      texture;
+	enum WrapMode  wrapS;
+	enum WrapMode  wrapT;
+	enum TexFormat format;
+	uint8_t        texCoord;
+};
 
 struct MeshPrimitive {
-	struct Accessor* attr_pos;
-	struct Accessor* attr_normal;
-	struct Accessor* attr_tangent;
-	struct Accessor* attr_st_0;
-	struct Accessor* attr_st_1;
-	struct Accessor* attr_vc_0;
-	struct Accessor* attr_joints_0;
-	struct Accessor* attr_weights_0;
-	struct Accessor* indices;
-	struct Material* material;
-	u8               mode; // enum PrimitiveMode
-} __attribute__((__packed__));
+	struct Accessor*   attrPos;
+	struct Accessor*   attrNormal;
+	struct Accessor*   attrTangent;
+	struct Accessor*   attrTexCoord0;
+	struct Accessor*   attrTexCoord1;
+	struct Accessor*   attrColor;
+	struct Accessor*   attrJoints;
+	struct Accessor*   attrWeights;
+	struct Accessor*   indices;
+	struct Material*   material;
+	enum PrimitiveMode mode;
+};
 
 struct Mesh {
 	char const* name;
-	size_t      primitives_count;
-	u32 const*  primitives;
-} __attribute__((__packed__));
+	uint32_t*   primitivesIdxs;
+	size_t      numPrimitives;
+};
 
 struct Node {
 	char const*  name;
-	f32          rotation[4];
-	f32          scale[3];
-	f32          translation[3];
-	size_t       children_count;
-	u32 const*   children;
 	struct Mesh* mesh;
-} __attribute__((__packed__));
+	uint32_t*    childrenIdxs;
+	size_t       numChildren;
+	guQuaternion rotation;
+	guVector     scale;
+	guVector     translation;
+};
 
 struct Scene {
 	char const* name;
-	size_t      nodes_count;
-	u32 const*  nodes;
-} __attribute__((__packed__));
+	uint32_t*   nodesIdxs;
+	size_t      numNodes;
+};
 
 struct Model {
-	size_t                index_table_count;
-	u32 const*            index_table;
-	size_t                node_table_count;
-	struct Node*          node_table;
-	size_t                mesh_table_count;
-	struct Mesh*          mesh_table;
-	size_t                material_table_count;
-	struct Material*      material_table;
-	size_t                primitive_table_count;
-	struct MeshPrimitive* primitive_table;
-	size_t                accessor_table_count;
-	struct Accessor*      accessor_table;
-	size_t                scene_table_count;
-	struct Scene*         scene_table;
-} __attribute__((__packed__));
+	uint32_t*             idxs;
+	struct Node*          nodes;
+	struct Mesh*          meshes;
+	struct Material*      materials;
+	struct MeshPrimitive* primitives;
+	struct Accessor*      accessors;
+	struct Scene*         scenes;
+	size_t                numIdxs;
+	size_t                numNodes;
+	size_t                numMeshes;
+	size_t                numMaterials;
+	size_t                numPrimitives;
+	size_t                numAccessors;
+	size_t                numScenes;
+};
 
-struct DirectoryEntry {
-	char const* name;
-	void*       offset;
-	u8          type; // enum AssetType
-	u8          _pad[3];
-} __attribute__((__packed__));
+struct Asset {
+	char const*    name;
+	void*          addr;
+	enum AssetType type;
+};
 
-struct PAKHeader {
-	char                   signature[4];
-	size_t                 string_table_length;
-	char const*            string_table;
-	size_t                 directory_count;
-	struct DirectoryEntry* directory;
-} __attribute__((__packed__));
+struct Level {
+	char*         stringTable;
+	struct Asset* assets;
+	size_t        numAssets;
+};
 
-void pak_init(struct PAKHeader* hdr);
+struct Level* pak_load(char* levelName);

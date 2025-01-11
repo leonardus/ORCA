@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,16 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 #include <stddef.h>
 
-struct MemoryLayout {
-	void*  renderXFB;
-	void*  renderFIFO;
-	void*  levelData;
-	size_t levelCapacity;
-	size_t heapCapacity;
-};
+extern void* g_XFB0;
+extern void* g_FIFO;
 
-void mem_checkalign(void* p, size_t alignment, char const* info);
-
-void mem_preinit(void);
-
-struct MemoryLayout mem_init(size_t heapSize);
+void  mem_checkOOM(void* p);
+void  mem_checkalign(void* p, size_t alignment, char const* info);
+void  mem_preinit(void);
+void  mem_init(size_t heapSize);
+void* mem_alloc_scratch(size_t n, size_t align);
+void  mem_reset_scratch(void);

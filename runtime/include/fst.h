@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,5 +32,6 @@ bool             fst_is_directory(struct FSTEntry* entry);
 size_t           fst_get_bufsz(struct FSTEntry* entry);
 char*            fst_get_filename(struct FSTEntry* entry);
 struct FSTEntry* fst_resolve_path(char* path);
-int              fst_read_file(struct FSTEntry* entry, void* buffer, fstreadcb cb, void* ud);
-void             fst_init(void);
+int  fst_read_async(struct FSTEntry* entry, void* buffer, size_t length, off_t offset, fstreadcb cb, void* ud);
+int  fst_read_sync(struct FSTEntry* entry, void* buffer, size_t length, off_t offset);
+void fst_init(void);

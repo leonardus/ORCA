@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <stdlib.h>
+#include <string.h>
 #include <gccore.h>
 #include "mem.h"
 #include "pak.h"
 
-static void* g_XFB = NULL;
+static void* currentXFB = NULL;
+static Mtx   currentCamera;
 
 static GXRModeObj* get_rmode(void) {
 	static GXRModeObj* rmode = NULL;
@@ -38,26 +40,30 @@ size_t render_get_fifosz(void) {
 }
 
 static void set_xfb(void* xfb) {
-	g_XFB = xfb;
+	currentXFB = xfb;
 	VIDEO_SetNextFramebuffer(xfb);
 	VIDEO_Flush();
 }
 
-void render_init(void* xfb, void* fifo) {
+void render_init(void) {
 #ifdef DEBUG
-	mem_checkalign(xfb, 32, "XFB");
-	mem_checkalign(fifo, 32, "FIFO");
+	if (g_XFB0 == NULL || g_FIFO == NULL) {
+		printf("ERROR: Render memory not initialized\n");
+		exit(1);
+	}
+	mem_checkalign(g_XFB0, 32, "XFB");
+	mem_checkalign(g_FIFO, 32, "FIFO");
 #endif
 	GXRModeObj* const rmode = get_rmode();
 
 	VIDEO_Init();
 	VIDEO_Configure(rmode);
 	VIDEO_SetBlack(true);
-	set_xfb(xfb);
+	set_xfb(g_XFB0);
 	VIDEO_Flush();
 
-	memset(fifo, 0, render_get_fifosz()); // Clear FIFO so there's no garbage data present
-	GX_Init(fifo, render_get_fifosz());
+	memset(g_FIFO, 0, render_get_fifosz()); // Clear FIFO so there's no garbage data present
+	GX_Init(g_FIFO, render_get_fifosz());
 	GX_SetDispCopyYScale(GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight));
 	GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst(rmode->fbWidth, rmode->xfbHeight);
@@ -70,52 +76,39 @@ void render_init(void* xfb, void* fifo) {
 	GX_SetCullMode(GX_CULL_NONE);
 	GX_SetClipMode(GX_CLIP_DISABLE);
 
-	static Mtx44 proj;
-	guPerspective(proj, 90, (float)rmode->fbWidth / (float)rmode->xfbHeight, 1.0F, 10000.0F);
+	guMtxIdentity(currentCamera);
+
+	Mtx44 proj;
+	guPerspective(proj, 70, (float)rmode->fbWidth / (float)rmode->xfbHeight, 1.0F, 10000.0F);
 	GX_LoadProjectionMtx(proj, GX_PERSPECTIVE);
 }
 
 void render_ready(void) {
 	/* Put some sensible data (clear color) in XFB before displaying anything */
-	GX_CopyDisp(g_XFB, GX_TRUE);
+	GX_CopyDisp(currentXFB, GX_TRUE);
 	VIDEO_WaitVSync();
 	VIDEO_SetBlack(false);
 	VIDEO_Flush();
 }
 
+void render_set_camera(Mtx camera) {
+	memcpy(currentCamera, camera, sizeof(Mtx));
+}
+
 static void draw_primitive(struct MeshPrimitive* const p) {
-	if (p->indices == NULL) {
+	if (p->attrPos != NULL && p->indices == NULL) {
 		printf("Not yet implemented/%s:%u\n", __func__, __LINE__);
 		exit(1);
 		return;
 	}
+	if (p->attrPos == NULL) return;
 
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_POS, GX_INDEX16);
 	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
 
-	size_t stride = 0;
-	switch (p->attr_pos->component_type) {
-	case GX_U8:
-		stride = sizeof(uint8_t);
-		break;
-	case GX_S8:
-		stride = sizeof(int8_t);
-		break;
-	case GX_U16:
-		stride = sizeof(uint16_t);
-		break;
-	case GX_S16:
-		stride = sizeof(int16_t);
-		break;
-	case GX_F32:
-		stride = sizeof(float);
-		break;
-	}
-	stride *= 3;
-
-	GX_SetArray(GX_VA_POS, p->attr_pos->buffer, stride);
-	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, p->attr_pos->component_type, 0);
+	GX_SetArray(GX_VA_POS, p->attrPos->buffer, p->attrPos->stride);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, p->attrPos->componentType, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
 
 	GX_Begin(p->mode, GX_VTXFMT0, p->indices->count);
@@ -127,32 +120,29 @@ static void draw_primitive(struct MeshPrimitive* const p) {
 }
 
 static void draw_model(Mtx camera, struct Model* m) {
-	for (size_t i = 0; i < m->node_table_count; i++) {
-		struct Node* const n = &m->node_table[i];
+	for (size_t i = 0; i < m->numNodes; i++) {
+		struct Node* const n = &m->nodes[i];
 		if (n->mesh == NULL) continue;
+
 		Mtx mv;
 		guMtxIdentity(mv);
-		c_guMtxQuat(mv, (guQuaternion*)n->rotation);
-		guMtxScaleApply(mv, mv, n->scale[0], n->scale[1], n->scale[2]);
-		guMtxTransApply(mv, mv, n->translation[0], n->translation[1], n->translation[2]);
+		c_guMtxQuat(mv, &n->rotation);
+		guMtxScaleApply(mv, mv, n->scale.x, n->scale.y, n->scale.z);
+		guMtxTransApply(mv, mv, n->translation.x, n->translation.y, n->translation.z);
 		guMtxConcat(camera, mv, mv);
 		GX_LoadPosMtxImm(mv, GX_PNMTX0);
 		GX_SetCurrentMtx(GX_PNMTX0);
 
-		for (size_t j = 0; j < n->mesh->primitives_count; j++) {
-			draw_primitive(&m->primitive_table[n->mesh->primitives[j]]);
+		for (size_t j = 0; j < n->mesh->numPrimitives; j++) {
+			draw_primitive(&m->primitives[j]);
 		}
 	}
 }
 
-void render_tick(Mtx camera, struct PAKHeader* pak) {
-	if (pak != NULL) {
-		for (size_t i = 0; i < pak->directory_count; i++) {
-			struct DirectoryEntry* e = &pak->directory[i];
-			if (e->type != ASSET_TYPE_MODEL) continue;
-			draw_model(camera, e->offset);
-		}
-	}
-	GX_CopyDisp(g_XFB, GX_TRUE);
+void render_tick(struct Model* model) {
+	GX_CopyDisp(currentXFB, GX_TRUE);
 	VIDEO_WaitVSync();
+	if (model != NULL) {
+		draw_model(currentCamera, model);
+	}
 }

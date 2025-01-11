@@ -1,6 +1,6 @@
 /*
 ORCA
-Copyright (C) 2024 leonardus
+Copyright (C) 2024,2025 leonardus
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 size_t render_get_xfbsz(void);
 size_t render_get_fifosz(void);
 
-void render_init(void* xfb, void* fifo);
+void render_init(void);
 void render_ready(void);
-void render_tick(Mtx camera, struct PAKHeader* pak);
+void render_set_camera(Mtx camera);
+void render_tick(struct Model* model);
