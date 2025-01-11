@@ -352,18 +352,18 @@ func toRGB5A3(im image.Image) (out []uint16) {
 	const TILE_SIZE int = 4
 	out = []uint16{}
 
-	numTilesX := im.Bounds().Max.X / TILE_SIZE
-	if im.Bounds().Max.X%TILE_SIZE != 0 {
+	numTilesX := im.Bounds().Dx() / TILE_SIZE
+	if im.Bounds().Dx()%TILE_SIZE != 0 {
 		numTilesX++
 	}
-	numTilesY := im.Bounds().Max.Y / TILE_SIZE
-	if im.Bounds().Max.Y%TILE_SIZE != 0 {
+	numTilesY := im.Bounds().Dy() / TILE_SIZE
+	if im.Bounds().Dy()%TILE_SIZE != 0 {
 		numTilesY++
 	}
-	for tileX := range numTilesX {
-		for tileY := range numTilesY {
-			for texelX := range TILE_SIZE {
-				for texelY := range TILE_SIZE {
+	for tileY := range numTilesX {
+		for tileX := range numTilesY {
+			for texelY := range TILE_SIZE {
+				for texelX := range TILE_SIZE {
 					var texel uint16 = 0
 					srcX := TILE_SIZE*tileX + texelX
 					srcY := TILE_SIZE*tileY + texelY
@@ -439,7 +439,7 @@ func packMaterials(model Model, pak Pak) (err error) {
 			return fmt.Errorf(`could not decode image (%w)`, err)
 		}
 		texBytes := toRGB5A3(im)
-		texLength := uint32(len(texBytes))
+		texLength := uint32(PackedSize(texBytes))
 		*pak.Buffer = AppendOrPanic(*pak.Buffer, binary.BigEndian, texBytes)
 
 		width := uint16(im.Bounds().Dx())
