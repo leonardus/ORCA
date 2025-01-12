@@ -143,7 +143,7 @@ static void draw_model(Mtx camera, struct Model* m) {
 		GX_SetCurrentMtx(GX_PNMTX0);
 
 		for (size_t j = 0; j < n->mesh->numPrimitives; j++) {
-			draw_primitive(&m->primitives[j]);
+			draw_primitive(&m->primitives[m->idxs[n->mesh->primitivesIdxs[j]]]);
 		}
 	}
 }
