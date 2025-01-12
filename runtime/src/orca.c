@@ -39,6 +39,7 @@ static struct Node* first_node_name(struct Model* m, char* name) {
 int main(void) {
 #ifdef DEBUG
 	CON_EnableBarnacle(EXI_CHANNEL_0, EXI_DEVICE_1);
+	CON_EnableGecko(EXI_CHANNEL_1, true);
 #endif
 	printf("ORCA Runtime built " __DATE__ " " __TIME__ "\n");
 	printf("Arena: %p - %p\n", SYS_GetArenaLo(), SYS_GetArenaHi());
