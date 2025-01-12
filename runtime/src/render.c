@@ -73,8 +73,8 @@ void render_init(void) {
 	GX_SetCopyClear((GXColor){0, 0, 0, 0}, GX_MAX_Z24);
 #endif
 	GX_SetViewport(0.0F, 0.0F, rmode->fbWidth, rmode->xfbHeight, 0.0F, 1.0F);
-	GX_SetCullMode(GX_CULL_NONE);
-	GX_SetClipMode(GX_CLIP_DISABLE);
+	GX_SetCullMode(GX_CULL_FRONT);
+	GX_SetClipMode(GX_CLIP_ENABLE);
 
 	guMtxIdentity(currentCamera);
 
