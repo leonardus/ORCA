@@ -6,7 +6,7 @@ version: 0
 levels:
     ~default:
         gltf:
-            ~default: 'Duck.glb'
+            ~default: 'SM_Deccer_Cubes_Textured_Complex.glb'
         script:
             main: 'demo.lua'
 ...

@@ -128,23 +128,64 @@ static void draw_primitive(struct MeshPrimitive* const p) {
 	GX_End();
 }
 
-static void draw_model(Mtx camera, struct Model* m) {
-	for (size_t i = 0; i < m->numNodes; i++) {
-		struct Node* const n = &m->nodes[i];
-		if (n->mesh == NULL) continue;
+/* libogc2 c_guMtxQuat implementation is broken */
+void my_guQuatToMtx(Mtx m, guQuaternion* const qua) {
+	m[0][0] = 1 - 2 * qua->y * qua->y - 2 * qua->z * qua->z;
+	m[0][1] = 2 * qua->x * qua->y - 2 * qua->w * qua->z;
+	m[0][2] = 2 * qua->x * qua->z + 2 * qua->w * qua->y;
+	m[0][3] = 0;
+	m[1][0] = 2 * qua->x * qua->y + 2 * qua->w * qua->z;
+	m[1][1] = 1 - 2 * qua->x * qua->x - 2 * qua->z * qua->z;
+	m[1][2] = 2 * qua->y * qua->z - 2 * qua->w * qua->x;
+	m[1][3] = 0;
+	m[2][0] = 2 * qua->x * qua->z - 2 * qua->w * qua->y;
+	m[2][1] = 2 * qua->y * qua->z + 2 * qua->w * qua->x;
+	m[2][2] = 1 - 2 * qua->x * qua->x - 2 * qua->y * qua->y;
+	m[2][3] = 0;
+}
 
+static void draw_tree(struct Node* node, Mtx _parentM, struct Model* model) {
+	Mtx parentM;
+	if (_parentM != NULL) {
+		memcpy(parentM, _parentM, sizeof(Mtx));
+	} else {
+		guMtxIdentity(parentM);
+	}
+
+	Mtx m;
+	guMtxScale(m, node->scale.x, node->scale.y, node->scale.z);
+	Mtx rot;
+	my_guQuatToMtx(rot, &node->rotation);
+	guMtxConcat(rot, m, m);
+	guMtxTransApply(m, m, node->translation.x, node->translation.y, node->translation.z);
+	guMtxConcat(parentM, m, m);
+
+	if (node->mesh != NULL) {
 		Mtx mv;
-		guMtxIdentity(mv);
-		c_guMtxQuat(mv, &n->rotation);
-		guMtxScaleApply(mv, mv, n->scale.x, n->scale.y, n->scale.z);
-		guMtxTransApply(mv, mv, n->translation.x, n->translation.y, n->translation.z);
-		guMtxConcat(camera, mv, mv);
+		guMtxConcat(currentCamera, m, mv);
 		GX_LoadPosMtxImm(mv, GX_PNMTX0);
 		GX_SetCurrentMtx(GX_PNMTX0);
 
-		for (size_t j = 0; j < n->mesh->numPrimitives; j++) {
-			draw_primitive(&m->primitives[m->idxs[n->mesh->primitivesIdxs[j]]]);
+		for (size_t i = 0; i < node->mesh->numPrimitives; i++) {
+			draw_primitive(model->primitives + node->mesh->primitivesIdxs[i]);
 		}
+	}
+
+	for (size_t i = 0; i < node->numChildren; i++) {
+		draw_tree(model->nodes + node->childrenIdxs[i], m, model);
+	}
+}
+
+static void draw_scene(struct Scene* scene, struct Model* model) {
+	for (size_t i = 0; i < scene->numNodes; i++) {
+		struct Node* const n = model->nodes + scene->nodesIdxs[i];
+		draw_tree(n, NULL, model);
+	}
+}
+
+static void draw_model(struct Model* model) {
+	for (size_t s = 0; s < model->numScenes; s++) {
+		draw_scene(model->scenes + s, model);
 	}
 }
 
@@ -152,6 +193,6 @@ void render_tick(struct Model* model) {
 	GX_CopyDisp(currentXFB, GX_TRUE);
 	VIDEO_WaitVSync();
 	if (model != NULL) {
-		draw_model(currentCamera, model);
+		draw_model(model);
 	}
 }

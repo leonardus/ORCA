@@ -62,10 +62,10 @@ int main(void) {
 
 	if (model != NULL) {
 		struct Node* const camera = first_node_name(model, "Camera");
-		struct Node* const duck = first_node_name(model, "Duck");
-		if (camera != NULL && duck != NULL) {
+		struct Node* const target = first_node_name(model, "Target");
+		if (camera != NULL && target != NULL) {
 			Mtx mtx;
-			guLookAt(mtx, &camera->translation, &(guVector){0, 1, 0}, &duck->translation);
+			guLookAt(mtx, &camera->translation, &(guVector){0, 1, 0}, &target->translation);
 			render_set_camera(mtx);
 		}
 	}
