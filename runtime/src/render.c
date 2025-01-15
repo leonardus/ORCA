@@ -252,6 +252,7 @@ static void draw_tree(struct Node* node, Mtx _parentM, struct Model* model) {
 		Mtx mv;
 		guMtxConcat(currentCamera, m, mv);
 		GX_LoadPosMtxImm(mv, GX_PNMTX0);
+		GX_LoadNrmMtxImm(mv, GX_PNMTX0);
 		GX_SetCurrentMtx(GX_PNMTX0);
 
 		for (size_t i = 0; i < node->mesh->numPrimitives; i++) {
