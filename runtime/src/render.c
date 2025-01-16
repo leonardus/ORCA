@@ -111,8 +111,8 @@ void render_set_camera(Mtx camera) {
 }
 
 static void send_corrected_color(struct Accessor* acr, uint16_t idx) {
-	float*    rgba_f32 = (float*)acr->buffer + (idx * acr->stride);
-	uint16_t* rgba_u16 = (uint16_t*)acr->buffer + (idx * acr->stride);
+	float*    rgba_f32 = (float*)(acr->buffer + (idx * acr->stride));
+	uint16_t* rgba_u16 = (uint16_t*)(acr->buffer + (idx * acr->stride));
 	switch (acr->componentType) {
 	case COMPONENT_F32:
 		switch (acr->elementType) {
