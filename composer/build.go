@@ -66,13 +66,50 @@ func makeTempDir(pattern string) (tempDir string, err error) {
 }
 
 type BuildCmd struct {
-	Apploader string `arg:"" help:"Path to a retail-compatible apploader (e.g. ORCA freeloader)" existingfile:""`
-	Runtime   string `arg:"dol" help:"Path to the ORCA runtime executable" existingfile:""`
-	Dir       string `arg:"project" help:"Path to the project root directory (defaults to the current directory)" optional:"" existingdir:""`
+	Apploader *string `help:"Path to a retail-compatible apploader (e.g. ORCA freeloader)" optional:"" existingfile:""`
+	Runtime   *string `help:"Path to the ORCA runtime executable" optional:"" existingfile:""`
+	Dir       *string `help:"Path to the project root directory (defaults to the current directory)" optional:"" existingdir:""`
+}
+
+func getOrcaComponent(name string) (string, error) {
+	orcaDir, exists := os.LookupEnv("ORCA")
+	if !exists {
+		return "", fmt.Errorf(`ORCA is not installed`)
+	}
+	component := filepath.Join(orcaDir, name)
+	_, err := os.Stat(component)
+	if err != nil {
+		return "", fmt.Errorf(`failed to locate ORCA component "%s" (%w)`, name, err)
+	}
+	return component, nil
 }
 
 func (r *BuildCmd) Run() error {
-	manifest, err := readManifest(filepath.Join(r.Dir, "manifest.yaml"))
+	var loader string
+	var dol string
+	var projectDir string
+
+	var err error
+	if r.Apploader == nil {
+		loader, err = getOrcaComponent("FREELOADER.IMG")
+	} else {
+		loader = *r.Apploader
+	}
+	if r.Runtime == nil {
+		dol, err = getOrcaComponent("ORCA.DOL")
+	} else {
+		dol = *r.Runtime
+	}
+	if r.Dir == nil {
+		projectDir, err = os.Getwd()
+	} else {
+		projectDir = *r.Dir
+	}
+	if err != nil {
+		return err
+	}
+
+	manifest, err := readManifest(filepath.Join(projectDir, "manifest.yaml"))
 	if err != nil {
 		return err
 	}
@@ -105,7 +142,7 @@ func (r *BuildCmd) Run() error {
 			return fmt.Errorf(`level name exceeded maximum of 63 characters`)
 		}
 
-		buf, err := PackLevel(level, r.Dir)
+		buf, err := PackLevel(level, projectDir)
 		if err != nil {
 			return err
 		}
@@ -117,12 +154,12 @@ func (r *BuildCmd) Run() error {
 		}
 	}
 
-	gcm, err := GCM(id, r.Apploader, r.Runtime, tempDir)
+	gcm, err := GCM(id, loader, dol, tempDir)
 	if err != nil {
 		return fmt.Errorf(`failed to pack GCM image (%w)`, err)
 	}
 
-	f, err := os.Create(filepath.Join(r.Dir, "game.gcm"))
+	f, err := os.Create(filepath.Join(projectDir, "game.gcm"))
 	if err != nil {
 		return fmt.Errorf(`failed to create GCM file (%w)`, err)
 	}
