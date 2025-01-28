@@ -68,7 +68,7 @@ func makeTempDir(pattern string) (tempDir string, err error) {
 type BuildCmd struct {
 	Apploader *string `help:"Path to a retail-compatible apploader (e.g. ORCA freeloader)" optional:"" existingfile:""`
 	Runtime   *string `help:"Path to the ORCA runtime executable" optional:"" existingfile:""`
-	Dir       *string `help:"Path to the project root directory (defaults to the current directory)" optional:"" existingdir:""`
+	Dir       *string `help:"Path to the project root directory (defaults to the current directory)" arg:"" optional:"" existingdir:""`
 }
 
 func getOrcaComponent(name string) (string, error) {
