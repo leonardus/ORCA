@@ -38,7 +38,7 @@ target("freeloader")
 
 	add_ldflags("-nostartfiles", {force=true})
 	add_ldflags("-nodefaultlibs", {force=true})
-	add_ldflags("-Wl,-Ttext=81200000")
+	add_ldflags("-Wl,-Ttext=81200000", {force=true})
 
 	set_kind("binary")
 	set_basename("FREELOADER")
