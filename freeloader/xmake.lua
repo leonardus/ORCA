@@ -18,9 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 ]]
 
-local devkitpro_dir = os.getenv("DEVKITPRO")
-local devkitppc_bindir = path.join(devkitpro_dir, "devkitPPC", "bin")
-
 option("PatchIPL")
 	set_default(false)
 	set_description("Skip IPL animation")
@@ -28,6 +25,7 @@ option("PatchIPL")
 option_end()
 
 target("freeloader")
+	add_rules("ORCAEnv")
 	set_plat("dolphin")
 	set_arch("ppc")
 	set_toolchains("devkitppc")
@@ -70,7 +68,7 @@ target("freeloader")
 
 		local bin = path.join(os.tmpdir(), target:basename() .. ".BIN")
 		os.run("%s --strip-all -O binary %s %s",
-		       path.join(devkitppc_bindir, "powerpc-eabi-objcopy"),
+		       path.join("$(env DEVKITPRO)", "devkitPPC", "bin", "powerpc-eabi-objcopy"),
 			   target:targetfile(),
 			   bin
 		)
@@ -84,10 +82,6 @@ target("freeloader")
 	end)
 
 	on_install(function(target)
-		if os.getenv("ORCA") then
-			os.cp(path.join(target:targetdir(), target:basename()) .. ".IMG", os.getenv("ORCA"))
-		else
-			raise "please set ORCA in your environment."
-		end
+		os.cp(path.join(target:targetdir(), target:basename() .. ".IMG"), "$(env ORCA)")
 	end)
 target_end()

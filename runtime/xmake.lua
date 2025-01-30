@@ -18,10 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 ]]
 
-local devkitpro_dir = os.getenv("DEVKITPRO")
-local devkitppc_bindir = path.join(devkitpro_dir, "devkitPPC", "bin")
-
 target("runtime")
+	add_rules("ORCAEnv")
 	set_plat("dolphin")
 	set_arch("ppc")
 	set_toolchains("devkitppc")
@@ -30,8 +28,8 @@ target("runtime")
 	add_cxflags("-mogc")
 	add_asflags("-mogc")
 	add_ldflags("-mogc")
-	add_linkdirs(path.join(devkitpro_dir, "libogc2", "lib", "cube"))
-	add_sysincludedirs(path.join(devkitpro_dir, "libogc2", "include"))
+	add_linkdirs(path.join("$(env DEVKITPRO)", "libogc2", "lib", "cube"))
+	add_sysincludedirs(path.join("$(env DEVKITPRO)", "libogc2", "include"))
 	add_syslinks("ogc")
 	add_defines("OGC")
 
@@ -51,7 +49,7 @@ target("runtime")
 
 	after_build(function(target)
 		os.run("%s %s %s", 
-		       path.join(devkitpro_dir, "tools", "bin", "elf2dol"),
+		       path.join("$(env DEVKITPRO)", "tools", "bin", "elf2dol"),
 		       target:targetfile(),
 			   path.join(target:targetdir(), target:basename() .. ".DOL")
 		)
@@ -60,10 +58,6 @@ target("runtime")
 	end)
 
 	on_install(function(target)
-		if os.getenv("ORCA") then
-			os.cp(path.join(target:targetdir(), target:basename() .. ".DOL"), os.getenv("ORCA"))
-		else
-			raise "please set ORCA in your environment."
-		end
+		os.cp(path.join(target:targetdir(), target:basename() .. ".DOL"), "$(env ORCA)")
 	end)
 target_end()

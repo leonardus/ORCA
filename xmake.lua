@@ -25,17 +25,14 @@ set_allowedarchs("ppc")
 set_defaultplat("dolphin")
 set_defaultarchs("ppc")
 
-local devkitpro_dir = os.getenv("DEVKITPRO")
-local devkitppc_bindir = path.join(devkitpro_dir, "devkitPPC", "bin")
-
 toolchain("devkitppc")
 	set_kind("standalone")
 
 	on_check(function(toolchain)
-		return devkitpro_dir
+		return os.getenv("DEVKITPPC")
 	end)
 
-	set_bindir(devkitppc_bindir)
+	set_bindir(path.join("$(env DEVKITPRO)", "devkitPPC", "bin"))
 	for k, v in pairs({
 		cc = "powerpc-eabi-gcc",
 		cxx = "powerpc-eabi-g++",
@@ -55,6 +52,12 @@ toolchain("devkitppc")
 	add_syslinks("m")
 	add_defines("GEKKO")
 toolchain_end()
+
+rule("ORCAEnv")
+	on_load(function(target)
+		if os.getenv("ORCA") == nil then raise "Please set ORCA in your environment." end
+	end)
+rule_end()
 
 includes("runtime/xmake.lua")
 includes("freeloader/xmake.lua")
