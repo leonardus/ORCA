@@ -29,7 +29,7 @@ toolchain("devkitppc")
 	set_kind("standalone")
 
 	on_check(function(toolchain)
-		return os.getenv("DEVKITPPC")
+		return os.isdir("$(env DEVKITPRO)") and os.getenv("DEVKITPPC")
 	end)
 
 	set_bindir(path.join("$(env DEVKITPRO)", "devkitPPC", "bin"))
