@@ -48,7 +48,7 @@ toolchain("devkitppc")
 	add_cxflags(march)
 	add_asflags(march)
 	add_ldflags(march)
-	add_sysincludedirs(path.join(devkitpro_dir, "devkitPPC", "powerpc-eabi", "include")) -- needed for clangd compile commands
+	add_sysincludedirs(path.join("$(env DEVKITPRO)", "devkitPPC", "powerpc-eabi", "include")) -- needed for clangd compile commands
 	add_syslinks("m")
 	add_defines("GEKKO")
 toolchain_end()
