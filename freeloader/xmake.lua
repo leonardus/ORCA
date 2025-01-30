@@ -59,13 +59,6 @@ target("freeloader")
 			return table.concat(header)
 		end
 
-		local function readBinaryFile(path)
-			local f = io.open(path, "rb")
-			local contents = f:read("*a")
-			f:close()
-			return contents
-		end
-
 		local bin = path.join(os.tmpdir(), target:basename() .. ".BIN")
 		os.run("%s --strip-all -O binary %s %s",
 		       path.join("$(env DEVKITPRO)", "devkitPPC", "bin", "powerpc-eabi-objcopy"),
@@ -75,7 +68,7 @@ target("freeloader")
 
 		local img = io.open(path.join(target:targetdir(), target:basename()) .. ".IMG", "wb")
 		img:write(makeAplHeader(bin))
-		img:write(readBinaryFile(bin))
+		img:write(io.readfile(bin, {encoding="b"}))
 		img:close()
 
 		os.rm(target:targetfile())
