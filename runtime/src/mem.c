@@ -45,23 +45,6 @@ void mem_checkalign(void* p, size_t alignment, char const* info) {
 	}
 }
 
-/*
- * libogc2's SYS_Init() calls __lowmem_init(), which sets ArenaHi and ArenaLo
- * to hardcoded values in devkitPro's linker script. This value can be
- * overridden by assigning values to the weak symbols
- * (void*)__myArena1Lo/__myArena1Hi. Because SYS_Init() calls __SYS_PreInit()
- * prior to __lowmem_init(), we set the
- * __myArena1Lo/__myArena1Hi here to the values that are given by the apploader,
- * before it assumes to use the default values.
- */
-void mem_preinit(void) {
-	extern void* __myArena1Lo;
-	extern void* __myArena1Hi;
-	__myArena1Lo = *(void**)0x80000030; /* NULL with retail-compatible apploader.
-	                                       Default value provided by linker script is OK. */
-	__myArena1Hi = *(void**)0x80000034; /* Apploader sets this value to address of FST. */
-}
-
 void* mem_alloc_scratch(size_t n, size_t align) {
 	uint8_t* addr = scratchNext;
 	if (align != 0 && n != 0 && (uintptr_t)addr % align != 0) {

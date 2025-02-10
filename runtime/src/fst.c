@@ -133,24 +133,6 @@ int fst_read_sync(struct FSTEntry* entry, void* buffer, size_t length, off_t off
 	return 0;
 }
 
-static void init_lowmem(void) {
-	/* libogc overwrites low memory; recover FST values */
-
-	/* Read FSTMaxLength from DVD, at offset 0x42C */
-	int const    dvdOffset = 0x42C;
-	size_t const bufsz = 32;
-	void* const  buf = aligned_alloc(32, bufsz);
-	dvdcmdblk    block;
-	DVD_ReadAbs(&block, buf, bufsz, dvdOffset);
-	*FSTMaxLength = *((u32*)buf);
-	free(buf);
-
-	/* FST is loaded by retail apploader at top of memory */
-	size_t const memSize = *((u32*)(SYS_BASE_CACHED + 0xF0));
-	*FSTBase = (struct FSTEntry*)(SYS_BASE_CACHED + memSize - ROUNDUP32(*FSTMaxLength));
-	printf("FST Base: %p\n", *FSTBase);
-}
-
 static void check_fst(void) {
 	for (struct FSTEntry* entry = *FSTBase; entry < *FSTBase + (*FSTBase)->length; entry++) {
 		if (entry->offset % 4 != 0) {
@@ -179,7 +161,6 @@ static void print_fst(void) {
 void fst_init(void) {
 	DVD_Init();
 	DVD_Mount();
-	init_lowmem();
 #ifdef DEBUG
 	check_fst();
 #endif

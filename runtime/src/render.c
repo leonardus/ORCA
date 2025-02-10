@@ -216,22 +216,6 @@ static void draw_primitive(struct MeshPrimitive* const p) {
 	GX_End();
 }
 
-/* libogc2 c_guMtxQuat implementation is broken */
-void my_guQuatToMtx(Mtx m, guQuaternion* const qua) {
-	m[0][0] = 1 - 2 * qua->y * qua->y - 2 * qua->z * qua->z;
-	m[0][1] = 2 * qua->x * qua->y - 2 * qua->w * qua->z;
-	m[0][2] = 2 * qua->x * qua->z + 2 * qua->w * qua->y;
-	m[0][3] = 0;
-	m[1][0] = 2 * qua->x * qua->y + 2 * qua->w * qua->z;
-	m[1][1] = 1 - 2 * qua->x * qua->x - 2 * qua->z * qua->z;
-	m[1][2] = 2 * qua->y * qua->z - 2 * qua->w * qua->x;
-	m[1][3] = 0;
-	m[2][0] = 2 * qua->x * qua->z - 2 * qua->w * qua->y;
-	m[2][1] = 2 * qua->y * qua->z + 2 * qua->w * qua->x;
-	m[2][2] = 1 - 2 * qua->x * qua->x - 2 * qua->y * qua->y;
-	m[2][3] = 0;
-}
-
 static void draw_tree(struct Node* node, Mtx _parentM, struct Model* model) {
 	Mtx parentM;
 	if (_parentM != NULL) {
@@ -243,7 +227,7 @@ static void draw_tree(struct Node* node, Mtx _parentM, struct Model* model) {
 	Mtx m;
 	guMtxScale(m, node->scale.x, node->scale.y, node->scale.z);
 	Mtx rot;
-	my_guQuatToMtx(rot, &node->rotation);
+	guMtxQuat(rot, &node->rotation);
 	guMtxConcat(rot, m, m);
 	guMtxTransApply(m, m, node->translation.x, node->translation.y, node->translation.z);
 	guMtxConcat(parentM, m, m);

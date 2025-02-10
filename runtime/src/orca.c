@@ -24,10 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "pak.h"
 #include "render.h"
 
-void __SYS_PreInit(void) {
-	mem_preinit();
-}
-
 static struct Node* first_node_name(struct Model* m, char* name) {
 	for (struct Node* n = m->nodes; n < m->nodes + m->numNodes; n++) {
 		if (n->name == NULL) continue;
