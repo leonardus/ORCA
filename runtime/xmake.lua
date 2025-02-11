@@ -45,6 +45,9 @@ target("runtime")
 
 	if is_mode("debug") then
 		add_defines("DEBUG")
+		set_symbols("debug")
+		set_optimize("none")
+		add_ldflags("-Wl,-Map=ORCA.MAP")
 	end
 
 	after_build(function(target)
@@ -59,5 +62,9 @@ target("runtime")
 
 	on_install(function(target)
 		os.cp(path.join(target:targetdir(), target:basename() .. ".DOL"), "$(env ORCA)")
+	end)
+
+	on_clean(function(target)
+		os.rm("ORCA.MAP")
 	end)
 target_end()

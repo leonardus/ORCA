@@ -3,3 +3,4 @@
 .xmake/
 compile_commands.json
 build/
+**/*.MAP
