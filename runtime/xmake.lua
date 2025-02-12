@@ -37,7 +37,7 @@ target("runtime")
 	set_basename("ORCA")
 	set_extension(".ELF")
 
-	set_languages("c11")
+	set_languages("c23")
 	set_optimize("faster")
 
 	add_includedirs("include")
@@ -48,6 +48,7 @@ target("runtime")
 		set_symbols("debug")
 		set_optimize("none")
 		add_ldflags("-Wl,-Map=ORCA.MAP")
+		set_warnings("allextra", "pedantic")
 	end
 
 	after_build(function(target)

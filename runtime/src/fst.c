@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "orca.h"
 
 static struct FSTEntry** const FSTBase = (void*)0x80000038;
-static u32* const              FSTMaxLength = (void*)0x8000003C;
 
 /* String table is located immediately above FST entries */
 #define STRING_TABLE ((char*)(*FSTBase + (*FSTBase)->length))
@@ -140,11 +139,12 @@ static void check_fst(void) {
 		}
 	}
 }
-static void print_fst(void) {
+
+[[maybe_unused]] static void print_fst(void) {
 	printf("[    FST    ] ");
-	u32 numEntries = (*FSTBase)->length;
+	uint32_t numEntries = (*FSTBase)->length;
 	printf("Total entries: %u\n", numEntries);
-	for (int i = 0; i < numEntries; i++) {
+	for (uint32_t i = 0; i < numEntries; i++) {
 		struct FSTEntry* entry = *FSTBase + i;
 		printf("[%d] %s\n", i, fst_get_filename(entry));
 		printf("Type: ");
@@ -163,5 +163,8 @@ void fst_init(void) {
 	DVD_Mount();
 #ifdef DEBUG
 	check_fst();
+#endif
+#ifdef DEBUG_FST
+	print_fst();
 #endif
 }

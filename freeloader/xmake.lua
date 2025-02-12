@@ -49,6 +49,13 @@ target("freeloader")
 	add_files("src/*.S")
 	add_files("apploader.ld")
 
+	if is_mode("debug") then
+		add_defines("DEBUG")
+		set_symbols("debug")
+		set_optimize("none")
+		set_warnings("allextra", "pedantic")
+	end
+
 	after_build(function(target)
 		local function makeAplHeader(bin)
 			local header = {}

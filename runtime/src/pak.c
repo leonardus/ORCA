@@ -220,7 +220,7 @@ static void init_material(struct FSTEntry* file, struct Level* level, struct Mat
 	              material->wrapS, material->wrapT, FALSE);
 }
 
-static void init_primitive(struct Level* level, struct Model* model, struct MeshPrimitive* primitive,
+static void init_primitive(struct Model* model, struct MeshPrimitive* primitive,
                            struct PAKMeshPrimitive* PAKMeshPrimitive) {
 	primitive->attrPos =
 	    PAKMeshPrimitive->attr_pos == UINT32_MAX ? NULL : model->accessors + PAKMeshPrimitive->attr_pos;
@@ -373,7 +373,7 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKNodes);
 	fst_read_sync(file, PAKNodes, ROUNDUP32(PAKModel->node_table_count * sizeof(struct PAKNode)),
 	              PAKModel->node_table_offset);
-	for (int i = 0; i < PAKModel->node_table_count; i++) {
+	for (uint32_t i = 0; i < PAKModel->node_table_count; i++) {
 		init_node(level, model, &model->nodes[i], &PAKNodes[i]);
 	}
 	free(PAKNodes);
@@ -382,7 +382,7 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKMeshes);
 	fst_read_sync(file, PAKMeshes, ROUNDUP32(PAKModel->mesh_table_count * sizeof(struct PAKMesh)),
 	              PAKModel->mesh_table_offset);
-	for (int i = 0; i < PAKModel->mesh_table_count; i++) {
+	for (uint32_t i = 0; i < PAKModel->mesh_table_count; i++) {
 		init_mesh(level, model, &model->meshes[i], &PAKMeshes[i]);
 	}
 	free(PAKMeshes);
@@ -392,7 +392,7 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKMaterials);
 	fst_read_sync(file, PAKMaterials, ROUNDUP32(PAKModel->material_table_count * sizeof(struct PAKMaterial)),
 	              PAKModel->material_table_offset);
-	for (int i = 0; i < PAKModel->material_table_count; i++) {
+	for (uint32_t i = 0; i < PAKModel->material_table_count; i++) {
 		init_material(file, level, &model->materials[i], &PAKMaterials[i]);
 	}
 	free(PAKMaterials);
@@ -402,8 +402,8 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKMeshPrimitives);
 	fst_read_sync(file, PAKMeshPrimitives, ROUNDUP32(PAKModel->primitive_table_count * sizeof(struct PAKMeshPrimitive)),
 	              PAKModel->primitive_table_offset);
-	for (int i = 0; i < PAKModel->primitive_table_count; i++) {
-		init_primitive(level, model, &model->primitives[i], &PAKMeshPrimitives[i]);
+	for (uint32_t i = 0; i < PAKModel->primitive_table_count; i++) {
+		init_primitive(model, &model->primitives[i], &PAKMeshPrimitives[i]);
 	}
 	free(PAKMeshPrimitives);
 
@@ -412,7 +412,7 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKAccessors);
 	fst_read_sync(file, PAKAccessors, ROUNDUP32(PAKModel->accessor_table_count * sizeof(struct PAKAccessor)),
 	              PAKModel->accessor_table_offset);
-	for (int i = 0; i < PAKModel->accessor_table_count; i++) {
+	for (uint32_t i = 0; i < PAKModel->accessor_table_count; i++) {
 		init_accessor(file, level, &model->accessors[i], &PAKAccessors[i]);
 	}
 	free(PAKAccessors);
@@ -422,7 +422,7 @@ static void init_model(struct FSTEntry* file, struct Level* level, struct Model*
 	mem_checkOOM(PAKScenes);
 	fst_read_sync(file, PAKScenes, ROUNDUP32(PAKModel->scene_table_count * sizeof(struct PAKScene)),
 	              PAKModel->scene_table_offset);
-	for (int i = 0; i < PAKModel->scene_table_count; i++) {
+	for (uint32_t i = 0; i < PAKModel->scene_table_count; i++) {
 		init_scene(level, model, &model->scenes[i], &PAKScenes[i]);
 	}
 	free(PAKScenes);

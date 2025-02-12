@@ -30,7 +30,7 @@ static GXRModeObj* get_rmode(void) {
 	static GXRModeObj* rmode = NULL;
 	if (rmode == NULL) rmode = VIDEO_GetPreferredMode(NULL);
 	return rmode;
-};
+}
 
 size_t render_get_xfbsz(void) {
 	return VIDEO_GetFrameBufferSize(get_rmode());
@@ -111,8 +111,8 @@ void render_set_camera(Mtx camera) {
 }
 
 static void send_corrected_color(struct Accessor* acr, uint16_t idx) {
-	float*    rgba_f32 = (float*)(acr->buffer + (idx * acr->stride));
-	uint16_t* rgba_u16 = (uint16_t*)(acr->buffer + (idx * acr->stride));
+	float*    rgba_f32 = (float*)((uint8_t*)acr->buffer + (idx * acr->stride));
+	uint16_t* rgba_u16 = (uint16_t*)((uint8_t*)acr->buffer + (idx * acr->stride));
 	switch (acr->componentType) {
 	case COMPONENT_F32:
 		switch (acr->elementType) {

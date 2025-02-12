@@ -4,7 +4,7 @@
  * Copyright (C) 2005-2006 The GameCube Linux Team
  * Copyright (C) 2005,2006 Albert Herranz
  * Copyright (C) 2020-2021 Extrems
- * Copyright (C) 2024 leonardus
+ * Copyright (C) 2024,2025 leonardus
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -83,11 +83,16 @@ struct dolphin_lowmem {
  *
  */
 
-void (*report)(char* text, ...);
-static void  al_start(void** enter, void** load, void** exit) __attribute__((section(".text.main")));
-static void  al_enter(void (*_report)(char* text, ...));
-static int   al_load(void** address, uint32_t* length, uint32_t* offset);
-static void* al_exit(void);
+report_f report;
+
+typedef void (*enter_f)(report_f _report);
+typedef int (*load_f)(void** address, uint32_t* length, uint32_t* offset);
+typedef void* (*exit_f)(void);
+void  al_enter(report_f _report);
+int   al_load(void** address, uint32_t* length, uint32_t* offset);
+void* al_exit(void);
+
+void al_start(enter_f* enter, load_f* load, exit_f* exit) __attribute__((section(".text.main")));
 
 /*
  *
@@ -111,7 +116,7 @@ struct bootloader_control {
 static struct dolphin_lowmem* lowmem = (struct dolphin_lowmem*)0x80000000;
 
 static struct apploader_control  al_control = {.fst_size = ~0};
-static struct bootloader_control bl_control = {};
+static struct bootloader_control bl_control;
 
 static unsigned char di_buffer[DI_SECTOR_SIZE] __attribute__((aligned(32)));
 
@@ -123,7 +128,7 @@ static void skip_ipl_animation(void);
 /*
  * This is our particular "main".
  */
-static void al_start(void** enter, void** load, void** exit) {
+void al_start(enter_f* enter, load_f* load, exit_f* exit) {
 	al_control.step = 0;
 
 	*enter = al_enter;
@@ -214,7 +219,7 @@ static void al_check_dol(struct dol_header* h) {
  * Initializes the apploader related stuff.
  * Called by the IPL.
  */
-static void al_enter(void (*_report)(char* text, ...)) {
+void al_enter(report_f _report) {
 	al_control.step = 1;
 	al_control.report = _report;
 	report = _report;
@@ -225,7 +230,7 @@ static void al_enter(void (*_report)(char* text, ...)) {
  * This is the apploader main processing function.
  * Called by the IPL.
  */
-static int al_load(void** address, uint32_t* length, uint32_t* offset) {
+int al_load(void** address, uint32_t* length, uint32_t* offset) {
 	struct gcm_disk_header*      disk_header;
 	struct gcm_disk_header_info* disk_header_info;
 
@@ -243,7 +248,7 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 		*address = di_buffer;
 		*length = (uint32_t)di_align(sizeof(*disk_header) + sizeof(*disk_header_info));
 		*offset = 0;
-		invalidate_dcache_range(*address, *address + *length);
+		invalidate_dcache_range(*address, (uint8_t*)*address + *length);
 
 		al_control.step++;
 		break;
@@ -261,7 +266,7 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 		*address = di_buffer;
 		*length = DOL_HEADER_SIZE;
 		*offset = bl_control.offset;
-		invalidate_dcache_range(*address, *address + *length);
+		invalidate_dcache_range(*address, (uint8_t*)*address + *length);
 
 		bl_control.sects_bitmap = 0xffffffff;
 
@@ -312,8 +317,8 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 		*length = (uint32_t)di_align(dol_sect_size(dh, j));
 		*offset = bl_control.offset + dol_sect_offset(dh, j);
 
-		invalidate_dcache_range(*address, *address + *length);
-		if (dol_sect_is_text(dh, j)) invalidate_icache_range(*address, *address + *length);
+		invalidate_dcache_range(*address, (uint8_t*)*address + *length);
+		if (dol_sect_is_text(dh, j)) invalidate_icache_range(*address, (uint8_t*)*address + *length);
 
 		/* check if we are going to be done with all sections */
 		if (bl_control.sects_bitmap == bl_control.all_sects_bitmap) {
@@ -331,7 +336,7 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 		*address = (void*)al_control.fst_address;
 		*length = (uint32_t)di_align(al_control.fst_size);
 		*offset = al_control.fst_offset;
-		invalidate_dcache_range(*address, *address + *length);
+		invalidate_dcache_range(*address, (uint8_t*)*address + *length);
 
 		al_control.step++;
 		break;
@@ -344,7 +349,7 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 		*address = (void*)al_control.bi2_address;
 		*length = 0x2000;
 		*offset = 0x440;
-		invalidate_dcache_range(*address, *address + *length);
+		invalidate_dcache_range(*address, (uint8_t*)*address + *length);
 
 		al_control.step++;
 		break;
@@ -380,7 +385,7 @@ static int al_load(void** address, uint32_t* length, uint32_t* offset) {
 /*
  *
  */
-static void* al_exit(void) {
+void* al_exit(void) {
 	return bl_control.entry_point;
 }
 

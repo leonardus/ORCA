@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2005-2006 The GameCube Linux Team
  * Copyright (C) 2005,2006 Albert Herranz
- * Copyright (C) 2024 leonardus
+ * Copyright (C) 2024,2025 leonardus
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,7 +48,8 @@
 #define PAD_A (1 << 24)
 #define PAD_Z (1 << 20)
 
-extern void (*report)(char* text, ...);
+typedef void (*report_f)(char* text, ...);
+extern report_f report;
 
 extern void flush_dcache_range(void* start, void* stop);
 extern void invalidate_dcache_range(void* start, void* stop);
